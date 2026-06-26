@@ -1,9 +1,10 @@
 
-<!DOCTYPE html>
+html_content = '''<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>课程时间记录器</title>
     <style>
         * {
@@ -13,7 +14,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -68,6 +69,7 @@
             font-weight: 500;
             transition: all 0.3s ease;
             text-align: center;
+            font-family: inherit;
         }
 
         .course-btn:hover {
@@ -140,6 +142,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-family: inherit;
         }
 
         .btn-primary {
@@ -220,6 +223,7 @@
             cursor: pointer;
             font-size: 1.1rem;
             transition: all 0.2s;
+            font-family: inherit;
         }
 
         .date-nav button:hover {
@@ -334,6 +338,7 @@
             border-radius: 6px;
             transition: all 0.2s;
             font-size: 1rem;
+            font-family: inherit;
         }
 
         .delete-btn:hover {
@@ -417,11 +422,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>📚 课程时间记录器</h1>
+        <h1>课程时间记录器</h1>
 
-        <!-- 课程选择 -->
         <div class="card">
-            <div class="card-title">🎯 选择课程</div>
+            <div class="card-title">选择课程</div>
             <div class="course-grid">
                 <button class="course-btn" data-course="私教答疑">私教答疑</button>
                 <button class="course-btn" data-course="私教课程">私教课程</button>
@@ -434,34 +438,26 @@
             <div class="timer-display" id="timerDisplay">00:00:00</div>
 
             <div class="control-btns">
-                <button class="btn btn-primary" id="startBtn" disabled>
-                    ▶ 开始
-                </button>
-                <button class="btn btn-danger" id="stopBtn" disabled>
-                    ⏹ 结束
-                </button>
-                <button class="btn btn-secondary" id="resetBtn">
-                    ↺ 重置
-                </button>
+                <button class="btn btn-primary" id="startBtn" disabled>开始</button>
+                <button class="btn btn-danger" id="stopBtn" disabled>结束</button>
+                <button class="btn btn-secondary" id="resetBtn">重置</button>
             </div>
         </div>
 
-        <!-- 本周统计 -->
         <div class="card">
-            <div class="card-title">📊 本周统计</div>
+            <div class="card-title">本周统计</div>
             <div class="stats-grid" id="weekStats"></div>
             <div style="margin-top: 20px;">
-                <div class="card-title" style="font-size: 1rem;">📈 每日时长</div>
+                <div class="card-title" style="font-size: 1rem;">每日时长</div>
                 <div class="week-chart" id="weekChart"></div>
             </div>
         </div>
 
-        <!-- 每日记录 -->
         <div class="card">
             <div class="date-nav">
-                <button onclick="changeDate(-1)">◀</button>
+                <button onclick="changeDate(-1)">&lt;</button>
                 <div class="date-display" id="dateDisplay"></div>
-                <button onclick="changeDate(1)">▶</button>
+                <button onclick="changeDate(1)">&gt;</button>
             </div>
             <div class="records-list" id="recordsList"></div>
         </div>
@@ -471,7 +467,7 @@
 
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
-            <h3>⚠️ 确认删除</h3>
+            <h3>确认删除</h3>
             <p>确定要删除这条记录吗？此操作不可撤销。</p>
             <div class="modal-btns">
                 <button class="btn btn-secondary" onclick="closeModal()">取消</button>
@@ -481,7 +477,6 @@
     </div>
 
     <script>
-        // ==================== 数据管理 ====================
         const STORAGE_KEY = 'course_timer_records';
         
         function getRecords() {
@@ -507,14 +502,12 @@
             showToast('记录已删除');
         }
 
-        // ==================== 状态管理 ====================
         let selectedCourse = null;
         let startTime = null;
         let timerInterval = null;
         let currentDate = new Date();
         let deleteTargetId = null;
 
-        // ==================== DOM 元素 ====================
         const courseBtns = document.querySelectorAll('.course-btn');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -528,26 +521,23 @@
         const toast = document.getElementById('toast');
         const modalOverlay = document.getElementById('modalOverlay');
 
-        // ==================== 课程选择 ====================
         courseBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                if (timerInterval) return; // 计时中不能切换
-                
+                if (timerInterval) return;
                 courseBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 selectedCourse = btn.dataset.course;
-                currentCourseDiv.innerHTML = `已选择：<span>${selectedCourse}</span>`;
+                currentCourseDiv.innerHTML = '已选择：<span>' + selectedCourse + '</span>';
                 startBtn.disabled = false;
             });
         });
 
-        // ==================== 计时功能 ====================
         function formatTime(ms) {
             const totalSeconds = Math.floor(ms / 1000);
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
         }
 
         function formatDuration(ms) {
@@ -556,9 +546,9 @@
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
             const parts = [];
-            if (hours > 0) parts.push(`${hours}小时`);
-            if (minutes > 0) parts.push(`${minutes}分钟`);
-            if (seconds > 0 || parts.length === 0) parts.push(`${seconds}秒`);
+            if (hours > 0) parts.push(hours + '小时');
+            if (minutes > 0) parts.push(minutes + '分钟');
+            if (seconds > 0 || parts.length === 0) parts.push(seconds + '秒');
             return parts.join('');
         }
 
@@ -569,32 +559,26 @@
 
         startBtn.addEventListener('click', () => {
             if (!selectedCourse) return;
-            
             startTime = Date.now();
             timerInterval = setInterval(updateTimer, 100);
-            
             timerDisplay.classList.add('running');
             startBtn.disabled = true;
             stopBtn.disabled = false;
             courseBtns.forEach(b => b.disabled = true);
-            currentCourseDiv.innerHTML = `正在记录：<span>${selectedCourse}</span> ⏱`;
+            currentCourseDiv.innerHTML = '正在记录：<span>' + selectedCourse + '</span>';
         });
 
         stopBtn.addEventListener('click', () => {
             if (!timerInterval) return;
-            
             clearInterval(timerInterval);
             timerInterval = null;
-            
             const endTime = Date.now();
             const duration = endTime - startTime;
-            
             if (duration < 1000) {
                 showToast('记录时间太短，已取消保存');
                 resetTimer();
                 return;
             }
-            
             const record = {
                 id: Date.now().toString(),
                 course: selectedCourse,
@@ -603,12 +587,9 @@
                 duration: duration,
                 date: new Date(startTime).toISOString().split('T')[0]
             };
-            
             addRecord(record);
-            
             timerDisplay.classList.remove('running');
-            showToast(`已保存：${selectedCourse} ${formatDuration(duration)}`);
-            
+            showToast('已保存：' + selectedCourse + ' ' + formatDuration(duration));
             resetTimer();
             renderRecords();
             renderWeekStats();
@@ -639,13 +620,12 @@
             currentCourseDiv.textContent = '请选择一门课程开始计时';
         }
 
-        // ==================== 日期导航 ====================
         function formatDate(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
             const d = String(date.getDate()).padStart(2, '0');
             const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-            return `${y}年${m}月${d}日 ${weekdays[date.getDay()]}`;
+            return y + '年' + m + '月' + d + '日 ' + weekdays[date.getDay()];
         }
 
         function getDateString(date) {
@@ -657,53 +637,26 @@
             renderRecords();
         }
 
-        // ==================== 记录渲染 ====================
         function renderRecords() {
             dateDisplay.textContent = formatDate(currentDate);
             const targetDate = getDateString(currentDate);
             const records = getRecords().filter(r => r.date === targetDate);
-            
             recordsList.innerHTML = '';
-            
             if (records.length === 0) {
-                recordsList.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <div>暂无记录</div>
-                    </div>
-                `;
+                recordsList.innerHTML = '<div class="empty-state"><div style="font-size:3rem;margin-bottom:10px;">&#128197;</div><div>暂无记录</div></div>';
                 return;
             }
-            
-            // 按时间倒序
             records.sort((a, b) => b.startTime - a.startTime);
-            
             records.forEach(record => {
                 const start = new Date(record.startTime);
-                const timeStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
-                
+                const timeStr = String(start.getHours()).padStart(2, '0') + ':' + String(start.getMinutes()).padStart(2, '0');
                 const item = document.createElement('div');
                 item.className = 'record-item';
-                item.innerHTML = `
-                    <div class="record-info">
-                        <div class="record-course">${record.course}</div>
-                        <div class="record-time">${timeStr} 开始</div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="record-duration">${formatDuration(record.duration)}</div>
-                        <button class="delete-btn" onclick="showDeleteModal('${record.id}')">🗑</button>
-                    </div>
-                `;
+                item.innerHTML = '<div class="record-info"><div class="record-course">' + record.course + '</div><div class="record-time">' + timeStr + ' 开始</div></div><div style="display:flex;align-items:center;gap:12px;"><div class="record-duration">' + formatDuration(record.duration) + '</div><button class="delete-btn" onclick="showDeleteModal(\'' + record.id + '\')">&#128465;</button></div>';
                 recordsList.appendChild(item);
             });
         }
 
-        // ==================== 删除确认 ====================
         function showDeleteModal(id) {
             deleteTargetId = id;
             modalOverlay.classList.add('show');
@@ -725,7 +678,6 @@
             if (e.target === modalOverlay) closeModal();
         });
 
-        // ==================== 本周统计 ====================
         function getWeekStart(date) {
             const d = new Date(date);
             const day = d.getDay();
@@ -740,18 +692,14 @@
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             weekEnd.setHours(23, 59, 59, 999);
-            
             const records = getRecords().filter(r => {
                 const d = new Date(r.startTime);
                 return d >= weekStart && d <= weekEnd;
             });
-            
             const courses = ['私教答疑', '私教课程', '快速上手', '公开课', '门店支持'];
             const stats = {};
             courses.forEach(c => stats[c] = 0);
             records.forEach(r => stats[r.course] = (stats[r.course] || 0) + r.duration);
-            
-            // 每日数据
             const daily = {};
             for (let i = 0; i < 7; i++) {
                 const d = new Date(weekStart);
@@ -763,55 +711,39 @@
                     daily[r.date] += r.duration;
                 }
             });
-            
             return { stats, daily, weekStart };
         }
 
         function renderWeekStats() {
             const { stats, daily, weekStart } = getWeekData();
-            
-            // 课程统计
             weekStats.innerHTML = '';
             Object.entries(stats).forEach(([course, duration]) => {
                 const hours = (duration / 3600000).toFixed(1);
                 const item = document.createElement('div');
                 item.className = 'stat-item';
-                item.innerHTML = `
-                    <div class="stat-label">${course}</div>
-                    <div class="stat-value">${hours}h</div>
-                `;
+                item.innerHTML = '<div class="stat-label">' + course + '</div><div class="stat-value">' + hours + 'h</div>';
                 weekStats.appendChild(item);
             });
-            
-            // 柱状图
             const dailyEntries = Object.entries(daily);
             const maxDuration = Math.max(...dailyEntries.map(([, v]) => v), 1);
             const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-            
             weekChart.innerHTML = '';
             dailyEntries.forEach(([date, duration], index) => {
                 const heightPercent = (duration / maxDuration) * 100;
                 const hours = (duration / 3600000).toFixed(1);
-                
                 const wrapper = document.createElement('div');
                 wrapper.className = 'bar-wrapper';
-                wrapper.innerHTML = `
-                    <div class="bar-value">${hours}h</div>
-                    <div class="bar" style="height: ${Math.max(heightPercent, 4)}%;"></div>
-                    <div class="bar-label">${weekdays[index]}</div>
-                `;
+                wrapper.innerHTML = '<div class="bar-value">' + hours + 'h</div><div class="bar" style="height:' + Math.max(heightPercent, 4) + '%;"></div><div class="bar-label">' + weekdays[index] + '</div>';
                 weekChart.appendChild(wrapper);
             });
         }
 
-        // ==================== 工具函数 ====================
         function showToast(message) {
             toast.textContent = message;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
-        // ==================== 初始化 ====================
         function init() {
             renderRecords();
             renderWeekStats();
@@ -822,7 +754,7 @@
 </body>
 </html>'''
 
-with open('/mnt/agents/output/course_timer.html', 'w', encoding='utf-8') as f:
+with open('/mnt/agents/output/index.html', 'w', encoding='utf-8') as f:
     f.write(html_content)
 
-print("文件已保存")
+print("文件已保存，使用 UTF-8 编码")
