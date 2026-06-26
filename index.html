@@ -1,832 +1,828 @@
-{\rtf1\ansi\ansicpg936\cocoartf2868
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;}
-{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
-{\*\expandedcolortbl;;\cssrgb\c0\c0\c0\c90196;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\deftab720
-\pard\pardeftab720\partightenfactor0
 
-\f0\fs28 \cf2 \expnd0\expndtw0\kerning0
-<!DOCTYPE html>\
-<html lang="zh-CN">\
-<head>\
-    <meta charset="UTF-8">\
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
-    <title>\uc0\u35838 \u31243 \u26102 \u38388 \u35760 \u24405 \u22120 </title>\
-    <style>\
-        * \{\
-            margin: 0;\
-            padding: 0;\
-            box-sizing: border-box;\
-        \}\
-\
-        body \{\
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\
-            min-height: 100vh;\
-            padding: 20px;\
-            color: #333;\
-        \}\
-\
-        .container \{\
-            max-width: 900px;\
-            margin: 0 auto;\
-        \}\
-\
-        h1 \{\
-            text-align: center;\
-            color: white;\
-            margin-bottom: 30px;\
-            font-size: 2rem;\
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);\
-        \}\
-\
-        .card \{\
-            background: white;\
-            border-radius: 16px;\
-            padding: 24px;\
-            margin-bottom: 20px;\
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);\
-        \}\
-\
-        .card-title \{\
-            font-size: 1.2rem;\
-            font-weight: 600;\
-            margin-bottom: 16px;\
-            color: #444;\
-            display: flex;\
-            align-items: center;\
-            gap: 8px;\
-        \}\
-\
-        .course-grid \{\
-            display: grid;\
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));\
-            gap: 12px;\
-            margin-bottom: 20px;\
-        \}\
-\
-        .course-btn \{\
-            padding: 14px 16px;\
-            border: 2px solid #e0e0e0;\
-            border-radius: 12px;\
-            background: white;\
-            cursor: pointer;\
-            font-size: 0.95rem;\
-            font-weight: 500;\
-            transition: all 0.3s ease;\
-            text-align: center;\
-        \}\
-\
-        .course-btn:hover \{\
-            border-color: #667eea;\
-            transform: translateY(-2px);\
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);\
-        \}\
-\
-        .course-btn.active \{\
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\
-            color: white;\
-            border-color: transparent;\
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);\
-        \}\
-\
-        .course-btn:disabled \{\
-            opacity: 0.5;\
-            cursor: not-allowed;\
-            transform: none;\
-        \}\
-\
-        .timer-display \{\
-            text-align: center;\
-            font-size: 3.5rem;\
-            font-weight: 700;\
-            color: #667eea;\
-            font-variant-numeric: tabular-nums;\
-            margin: 20px 0;\
-            letter-spacing: 2px;\
-        \}\
-\
-        .timer-display.running \{\
-            color: #e74c3c;\
-            animation: pulse 1s infinite;\
-        \}\
-\
-        @keyframes pulse \{\
-            0%, 100% \{ opacity: 1; \}\
-            50% \{ opacity: 0.7; \}\
-        \}\
-\
-        .current-course \{\
-            text-align: center;\
-            font-size: 1.1rem;\
-            color: #666;\
-            margin-bottom: 16px;\
-            min-height: 24px;\
-        \}\
-\
-        .current-course span \{\
-            color: #667eea;\
-            font-weight: 600;\
-        \}\
-\
-        .control-btns \{\
-            display: flex;\
-            gap: 12px;\
-            justify-content: center;\
-            flex-wrap: wrap;\
-        \}\
-\
-        .btn \{\
-            padding: 14px 36px;\
-            border: none;\
-            border-radius: 12px;\
-            font-size: 1rem;\
-            font-weight: 600;\
-            cursor: pointer;\
-            transition: all 0.3s ease;\
-            display: flex;\
-            align-items: center;\
-            gap: 8px;\
-        \}\
-\
-        .btn-primary \{\
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\
-            color: white;\
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);\
-        \}\
-\
-        .btn-primary:hover \{\
-            transform: translateY(-2px);\
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);\
-        \}\
-\
-        .btn-danger \{\
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);\
-            color: white;\
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);\
-        \}\
-\
-        .btn-danger:hover \{\
-            transform: translateY(-2px);\
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);\
-        \}\
-\
-        .btn-secondary \{\
-            background: #f0f0f0;\
-            color: #555;\
-        \}\
-\
-        .btn-secondary:hover \{\
-            background: #e0e0e0;\
-        \}\
-\
-        .btn:disabled \{\
-            opacity: 0.5;\
-            cursor: not-allowed;\
-            transform: none !important;\
-        \}\
-\
-        .stats-grid \{\
-            display: grid;\
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));\
-            gap: 12px;\
-        \}\
-\
-        .stat-item \{\
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);\
-            padding: 16px;\
-            border-radius: 12px;\
-            text-align: center;\
-        \}\
-\
-        .stat-label \{\
-            font-size: 0.85rem;\
-            color: #666;\
-            margin-bottom: 6px;\
-        \}\
-\
-        .stat-value \{\
-            font-size: 1.4rem;\
-            font-weight: 700;\
-            color: #667eea;\
-        \}\
-\
-        .date-nav \{\
-            display: flex;\
-            justify-content: space-between;\
-            align-items: center;\
-            margin-bottom: 16px;\
-        \}\
-\
-        .date-nav button \{\
-            background: #f0f0f0;\
-            border: none;\
-            width: 36px;\
-            height: 36px;\
-            border-radius: 50%;\
-            cursor: pointer;\
-            font-size: 1.1rem;\
-            transition: all 0.2s;\
-        \}\
-\
-        .date-nav button:hover \{\
-            background: #667eea;\
-            color: white;\
-        \}\
-\
-        .date-display \{\
-            font-size: 1.1rem;\
-            font-weight: 600;\
-            color: #444;\
-        \}\
-\
-        .records-list \{\
-            max-height: 300px;\
-            overflow-y: auto;\
-        \}\
-\
-        .record-item \{\
-            display: flex;\
-            justify-content: space-between;\
-            align-items: center;\
-            padding: 12px 16px;\
-            background: #f8f9fa;\
-            border-radius: 10px;\
-            margin-bottom: 8px;\
-            transition: all 0.2s;\
-        \}\
-\
-        .record-item:hover \{\
-            background: #eef0f5;\
-        \}\
-\
-        .record-info \{\
-            display: flex;\
-            flex-direction: column;\
-            gap: 4px;\
-        \}\
-\
-        .record-course \{\
-            font-weight: 600;\
-            color: #444;\
-        \}\
-\
-        .record-time \{\
-            font-size: 0.85rem;\
-            color: #888;\
-        \}\
-\
-        .record-duration \{\
-            font-weight: 700;\
-            color: #667eea;\
-            font-size: 1.1rem;\
-        \}\
-\
-        .empty-state \{\
-            text-align: center;\
-            padding: 40px;\
-            color: #999;\
-        \}\
-\
-        .empty-state svg \{\
-            width: 64px;\
-            height: 64px;\
-            margin-bottom: 12px;\
-            opacity: 0.5;\
-        \}\
-\
-        .week-chart \{\
-            display: flex;\
-            gap: 8px;\
-            align-items: flex-end;\
-            height: 150px;\
-            padding: 10px 0;\
-        \}\
-\
-        .bar-wrapper \{\
-            flex: 1;\
-            display: flex;\
-            flex-direction: column;\
-            align-items: center;\
-            gap: 6px;\
-        \}\
-\
-        .bar \{\
-            width: 100%;\
-            background: linear-gradient(to top, #667eea, #764ba2);\
-            border-radius: 6px 6px 0 0;\
-            min-height: 4px;\
-            transition: height 0.5s ease;\
-            position: relative;\
-        \}\
-\
-        .bar-label \{\
-            font-size: 0.75rem;\
-            color: #888;\
-            font-weight: 500;\
-        \}\
-\
-        .bar-value \{\
-            font-size: 0.7rem;\
-            color: #667eea;\
-            font-weight: 600;\
-        \}\
-\
-        .delete-btn \{\
-            background: none;\
-            border: none;\
-            color: #ccc;\
-            cursor: pointer;\
-            padding: 4px 8px;\
-            border-radius: 6px;\
-            transition: all 0.2s;\
-            font-size: 1rem;\
-        \}\
-\
-        .delete-btn:hover \{\
-            color: #e74c3c;\
-            background: #fee;\
-        \}\
-\
-        .toast \{\
-            position: fixed;\
-            bottom: 30px;\
-            left: 50%;\
-            transform: translateX(-50%) translateY(100px);\
-            background: #333;\
-            color: white;\
-            padding: 12px 24px;\
-            border-radius: 10px;\
-            font-size: 0.95rem;\
-            opacity: 0;\
-            transition: all 0.3s ease;\
-            z-index: 1000;\
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);\
-        \}\
-\
-        .toast.show \{\
-            opacity: 1;\
-            transform: translateX(-50%) translateY(0);\
-        \}\
-\
-        .modal-overlay \{\
-            position: fixed;\
-            top: 0;\
-            left: 0;\
-            right: 0;\
-            bottom: 0;\
-            background: rgba(0,0,0,0.5);\
-            display: flex;\
-            align-items: center;\
-            justify-content: center;\
-            z-index: 999;\
-            opacity: 0;\
-            visibility: hidden;\
-            transition: all 0.3s;\
-        \}\
-\
-        .modal-overlay.show \{\
-            opacity: 1;\
-            visibility: visible;\
-        \}\
-\
-        .modal \{\
-            background: white;\
-            padding: 24px;\
-            border-radius: 16px;\
-            max-width: 400px;\
-            width: 90%;\
-            text-align: center;\
-        \}\
-\
-        .modal h3 \{\
-            margin-bottom: 12px;\
-            color: #444;\
-        \}\
-\
-        .modal p \{\
-            color: #666;\
-            margin-bottom: 20px;\
-        \}\
-\
-        .modal-btns \{\
-            display: flex;\
-            gap: 12px;\
-            justify-content: center;\
-        \}\
-\
-        @media (max-width: 600px) \{\
-            .timer-display \{ font-size: 2.5rem; \}\
-            .course-grid \{ grid-template-columns: repeat(2, 1fr); \}\
-            h1 \{ font-size: 1.5rem; \}\
-        \}\
-    </style>\
-<base target="_blank">\
-</head>\
-<body>\
-    <div class="container">\
-        <h1>\uc0\u55357 \u56538  \u35838 \u31243 \u26102 \u38388 \u35760 \u24405 \u22120 </h1>\
-\
-        <!-- \uc0\u35838 \u31243 \u36873 \u25321  -->\
-        <div class="card">\
-            <div class="card-title">\uc0\u55356 \u57263  \u36873 \u25321 \u35838 \u31243 </div>\
-            <div class="course-grid">\
-                <button class="course-btn" data-course="\uc0\u31169 \u25945 \u31572 \u30097 ">\u31169 \u25945 \u31572 \u30097 </button>\
-                <button class="course-btn" data-course="\uc0\u31169 \u25945 \u35838 \u31243 ">\u31169 \u25945 \u35838 \u31243 </button>\
-                <button class="course-btn" data-course="\uc0\u24555 \u36895 \u19978 \u25163 ">\u24555 \u36895 \u19978 \u25163 </button>\
-                <button class="course-btn" data-course="\uc0\u20844 \u24320 \u35838 ">\u20844 \u24320 \u35838 </button>\
-                <button class="course-btn" data-course="\uc0\u38376 \u24215 \u25903 \u25345 ">\u38376 \u24215 \u25903 \u25345 </button>\
-            </div>\
-\
-            <div class="current-course" id="currentCourse">\uc0\u35831 \u36873 \u25321 \u19968 \u38376 \u35838 \u31243 \u24320 \u22987 \u35745 \u26102 </div>\
-            <div class="timer-display" id="timerDisplay">00:00:00</div>\
-\
-            <div class="control-btns">\
-                <button class="btn btn-primary" id="startBtn" disabled>\
-                    \uc0\u9654  \u24320 \u22987 \
-                </button>\
-                <button class="btn btn-danger" id="stopBtn" disabled>\
-                    \uc0\u9209  \u32467 \u26463 \
-                </button>\
-                <button class="btn btn-secondary" id="resetBtn">\
-                    \uc0\u8634  \u37325 \u32622 \
-                </button>\
-            </div>\
-        </div>\
-\
-        <!-- \uc0\u26412 \u21608 \u32479 \u35745  -->\
-        <div class="card">\
-            <div class="card-title">\uc0\u55357 \u56522  \u26412 \u21608 \u32479 \u35745 </div>\
-            <div class="stats-grid" id="weekStats"></div>\
-            <div style="margin-top: 20px;">\
-                <div class="card-title" style="font-size: 1rem;">\uc0\u55357 \u56520  \u27599 \u26085 \u26102 \u38271 </div>\
-                <div class="week-chart" id="weekChart"></div>\
-            </div>\
-        </div>\
-\
-        <!-- \uc0\u27599 \u26085 \u35760 \u24405  -->\
-        <div class="card">\
-            <div class="date-nav">\
-                <button onclick="changeDate(-1)">\uc0\u9664 </button>\
-                <div class="date-display" id="dateDisplay"></div>\
-                <button onclick="changeDate(1)">\uc0\u9654 </button>\
-            </div>\
-            <div class="records-list" id="recordsList"></div>\
-        </div>\
-    </div>\
-\
-    <div class="toast" id="toast"></div>\
-\
-    <div class="modal-overlay" id="modalOverlay">\
-        <div class="modal">\
-            <h3>\uc0\u9888 \u65039  \u30830 \u35748 \u21024 \u38500 </h3>\
-            <p>\uc0\u30830 \u23450 \u35201 \u21024 \u38500 \u36825 \u26465 \u35760 \u24405 \u21527 \u65311 \u27492 \u25805 \u20316 \u19981 \u21487 \u25764 \u38144 \u12290 </p>\
-            <div class="modal-btns">\
-                <button class="btn btn-secondary" onclick="closeModal()">\uc0\u21462 \u28040 </button>\
-                <button class="btn btn-danger" onclick="confirmDelete()">\uc0\u21024 \u38500 </button>\
-            </div>\
-        </div>\
-    </div>\
-\
-    <script>\
-        // ==================== \uc0\u25968 \u25454 \u31649 \u29702  ====================\
-        const STORAGE_KEY = 'course_timer_records';\
-\
-        function getRecords() \{\
-            const data = localStorage.getItem(STORAGE_KEY);\
-            return data ? JSON.parse(data) : [];\
-        \}\
-\
-        function saveRecords(records) \{\
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));\
-        \}\
-\
-        function addRecord(record) \{\
-            const records = getRecords();\
-            records.push(record);\
-            saveRecords(records);\
-        \}\
-\
-        function deleteRecord(id) \{\
-            const records = getRecords().filter(r => r.id !== id);\
-            saveRecords(records);\
-            renderRecords();\
-            renderWeekStats();\
-            showToast('\uc0\u35760 \u24405 \u24050 \u21024 \u38500 ');\
-        \}\
-\
-        // ==================== \uc0\u29366 \u24577 \u31649 \u29702  ====================\
-        let selectedCourse = null;\
-        let startTime = null;\
-        let timerInterval = null;\
-        let currentDate = new Date();\
-        let deleteTargetId = null;\
-\
-        // ==================== DOM \uc0\u20803 \u32032  ====================\
-        const courseBtns = document.querySelectorAll('.course-btn');\
-        const startBtn = document.getElementById('startBtn');\
-        const stopBtn = document.getElementById('stopBtn');\
-        const resetBtn = document.getElementById('resetBtn');\
-        const timerDisplay = document.getElementById('timerDisplay');\
-        const currentCourseDiv = document.getElementById('currentCourse');\
-        const dateDisplay = document.getElementById('dateDisplay');\
-        const recordsList = document.getElementById('recordsList');\
-        const weekStats = document.getElementById('weekStats');\
-        const weekChart = document.getElementById('weekChart');\
-        const toast = document.getElementById('toast');\
-        const modalOverlay = document.getElementById('modalOverlay');\
-\
-        // ==================== \uc0\u35838 \u31243 \u36873 \u25321  ====================\
-        courseBtns.forEach(btn => \{\
-            btn.addEventListener('click', () => \{\
-                if (timerInterval) return; // \uc0\u35745 \u26102 \u20013 \u19981 \u33021 \u20999 \u25442 \
-\
-                courseBtns.forEach(b => b.classList.remove('active'));\
-                btn.classList.add('active');\
-                selectedCourse = btn.dataset.course;\
-                currentCourseDiv.innerHTML = `\uc0\u24050 \u36873 \u25321 \u65306 <span>$\{selectedCourse\}</span>`;\
-                startBtn.disabled = false;\
-            \});\
-        \});\
-\
-        // ==================== \uc0\u35745 \u26102 \u21151 \u33021  ====================\
-        function formatTime(ms) \{\
-            const totalSeconds = Math.floor(ms / 1000);\
-            const hours = Math.floor(totalSeconds / 3600);\
-            const minutes = Math.floor((totalSeconds % 3600) / 60);\
-            const seconds = totalSeconds % 60;\
-            return `$\{String(hours).padStart(2, '0')\}:$\{String(minutes).padStart(2, '0')\}:$\{String(seconds).padStart(2, '0')\}`;\
-        \}\
-\
-        function formatDuration(ms) \{\
-            const totalSeconds = Math.floor(ms / 1000);\
-            const hours = Math.floor(totalSeconds / 3600);\
-            const minutes = Math.floor((totalSeconds % 3600) / 60);\
-            const seconds = totalSeconds % 60;\
-            const parts = [];\
-            if (hours > 0) parts.push(`$\{hours\}\uc0\u23567 \u26102 `);\
-            if (minutes > 0) parts.push(`$\{minutes\}\uc0\u20998 \u38047 `);\
-            if (seconds > 0 || parts.length === 0) parts.push(`$\{seconds\}\uc0\u31186 `);\
-            return parts.join('');\
-        \}\
-\
-        function updateTimer() \{\
-            const elapsed = Date.now() - startTime;\
-            timerDisplay.textContent = formatTime(elapsed);\
-        \}\
-\
-        startBtn.addEventListener('click', () => \{\
-            if (!selectedCourse) return;\
-\
-            startTime = Date.now();\
-            timerInterval = setInterval(updateTimer, 100);\
-\
-            timerDisplay.classList.add('running');\
-            startBtn.disabled = true;\
-            stopBtn.disabled = false;\
-            courseBtns.forEach(b => b.disabled = true);\
-            currentCourseDiv.innerHTML = `\uc0\u27491 \u22312 \u35760 \u24405 \u65306 <span>$\{selectedCourse\}</span> \u9201 `;\
-        \});\
-\
-        stopBtn.addEventListener('click', () => \{\
-            if (!timerInterval) return;\
-\
-            clearInterval(timerInterval);\
-            timerInterval = null;\
-\
-            const endTime = Date.now();\
-            const duration = endTime - startTime;\
-\
-            if (duration < 1000) \{\
-                showToast('\uc0\u35760 \u24405 \u26102 \u38388 \u22826 \u30701 \u65292 \u24050 \u21462 \u28040 \u20445 \u23384 ');\
-                resetTimer();\
-                return;\
-            \}\
-\
-            const record = \{\
-                id: Date.now().toString(),\
-                course: selectedCourse,\
-                startTime: startTime,\
-                endTime: endTime,\
-                duration: duration,\
-                date: new Date(startTime).toISOString().split('T')[0]\
-            \};\
-\
-            addRecord(record);\
-\
-            timerDisplay.classList.remove('running');\
-            showToast(`\uc0\u24050 \u20445 \u23384 \u65306 $\{selectedCourse\} $\{formatDuration(duration)\}`);\
-\
-            resetTimer();\
-            renderRecords();\
-            renderWeekStats();\
-        \});\
-\
-        resetBtn.addEventListener('click', () => \{\
-            if (timerInterval) \{\
-                if (!confirm('\uc0\u35745 \u26102 \u27491 \u22312 \u36827 \u34892 \u20013 \u65292 \u30830 \u23450 \u35201 \u37325 \u32622 \u21527 \u65311 ')) return;\
-                clearInterval(timerInterval);\
-                timerInterval = null;\
-            \}\
-            resetTimer();\
-            showToast('\uc0\u24050 \u37325 \u32622 ');\
-        \});\
-\
-        function resetTimer() \{\
-            timerInterval = null;\
-            startTime = null;\
-            timerDisplay.textContent = '00:00:00';\
-            timerDisplay.classList.remove('running');\
-            startBtn.disabled = !selectedCourse;\
-            stopBtn.disabled = true;\
-            courseBtns.forEach(b => \{\
-                b.disabled = false;\
-                b.classList.remove('active');\
-            \});\
-            selectedCourse = null;\
-            currentCourseDiv.textContent = '\uc0\u35831 \u36873 \u25321 \u19968 \u38376 \u35838 \u31243 \u24320 \u22987 \u35745 \u26102 ';\
-        \}\
-\
-        // ==================== \uc0\u26085 \u26399 \u23548 \u33322  ====================\
-        function formatDate(date) \{\
-            const y = date.getFullYear();\
-            const m = String(date.getMonth() + 1).padStart(2, '0');\
-            const d = String(date.getDate()).padStart(2, '0');\
-            const weekdays = ['\uc0\u21608 \u26085 ', '\u21608 \u19968 ', '\u21608 \u20108 ', '\u21608 \u19977 ', '\u21608 \u22235 ', '\u21608 \u20116 ', '\u21608 \u20845 '];\
-            return `$\{y\}\uc0\u24180 $\{m\}\u26376 $\{d\}\u26085  $\{weekdays[date.getDay()]\}`;\
-        \}\
-\
-        function getDateString(date) \{\
-            return date.toISOString().split('T')[0];\
-        \}\
-\
-        function changeDate(delta) \{\
-            currentDate.setDate(currentDate.getDate() + delta);\
-            renderRecords();\
-        \}\
-\
-        // ==================== \uc0\u35760 \u24405 \u28210 \u26579  ====================\
-        function renderRecords() \{\
-            dateDisplay.textContent = formatDate(currentDate);\
-            const targetDate = getDateString(currentDate);\
-            const records = getRecords().filter(r => r.date === targetDate);\
-\
-            recordsList.innerHTML = '';\
-\
-            if (records.length === 0) \{\
-                recordsList.innerHTML = `\
-                    <div class="empty-state">\
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>\
-                            <line x1="16" y1="2" x2="16" y2="6"></line>\
-                            <line x1="8" y1="2" x2="8" y2="6"></line>\
-                            <line x1="3" y1="10" x2="21" y2="10"></line>\
-                        </svg>\
-                        <div>\uc0\u26242 \u26080 \u35760 \u24405 </div>\
-                    </div>\
-                `;\
-                return;\
-            \}\
-\
-            // \uc0\u25353 \u26102 \u38388 \u20498 \u24207 \
-            records.sort((a, b) => b.startTime - a.startTime);\
-\
-            records.forEach(record => \{\
-                const start = new Date(record.startTime);\
-                const timeStr = `$\{String(start.getHours()).padStart(2, '0')\}:$\{String(start.getMinutes()).padStart(2, '0')\}`;\
-\
-                const item = document.createElement('div');\
-                item.className = 'record-item';\
-                item.innerHTML = `\
-                    <div class="record-info">\
-                        <div class="record-course">$\{record.course\}</div>\
-                        <div class="record-time">$\{timeStr\} \uc0\u24320 \u22987 </div>\
-                    </div>\
-                    <div style="display: flex; align-items: center; gap: 12px;">\
-                        <div class="record-duration">$\{formatDuration(record.duration)\}</div>\
-                        <button class="delete-btn" onclick="showDeleteModal('$\{record.id\}')">\uc0\u55357 \u56785 </button>\
-                    </div>\
-                `;\
-                recordsList.appendChild(item);\
-            \});\
-        \}\
-\
-        // ==================== \uc0\u21024 \u38500 \u30830 \u35748  ====================\
-        function showDeleteModal(id) \{\
-            deleteTargetId = id;\
-            modalOverlay.classList.add('show');\
-        \}\
-\
-        function closeModal() \{\
-            modalOverlay.classList.remove('show');\
-            deleteTargetId = null;\
-        \}\
-\
-        function confirmDelete() \{\
-            if (deleteTargetId) \{\
-                deleteRecord(deleteTargetId);\
-            \}\
-            closeModal();\
-        \}\
-\
-        modalOverlay.addEventListener('click', (e) => \{\
-            if (e.target === modalOverlay) closeModal();\
-        \});\
-\
-        // ==================== \uc0\u26412 \u21608 \u32479 \u35745  ====================\
-        function getWeekStart(date) \{\
-            const d = new Date(date);\
-            const day = d.getDay();\
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);\
-            d.setDate(diff);\
-            d.setHours(0, 0, 0, 0);\
-            return d;\
-        \}\
-\
-        function getWeekData() \{\
-            const weekStart = getWeekStart(new Date());\
-            const weekEnd = new Date(weekStart);\
-            weekEnd.setDate(weekEnd.getDate() + 6);\
-            weekEnd.setHours(23, 59, 59, 999);\
-\
-            const records = getRecords().filter(r => \{\
-                const d = new Date(r.startTime);\
-                return d >= weekStart && d <= weekEnd;\
-            \});\
-\
-            const courses = ['\uc0\u31169 \u25945 \u31572 \u30097 ', '\u31169 \u25945 \u35838 \u31243 ', '\u24555 \u36895 \u19978 \u25163 ', '\u20844 \u24320 \u35838 ', '\u38376 \u24215 \u25903 \u25345 '];\
-            const stats = \{\};\
-            courses.forEach(c => stats[c] = 0);\
-            records.forEach(r => stats[r.course] = (stats[r.course] || 0) + r.duration);\
-\
-            // \uc0\u27599 \u26085 \u25968 \u25454 \
-            const daily = \{\};\
-            for (let i = 0; i < 7; i++) \{\
-                const d = new Date(weekStart);\
-                d.setDate(d.getDate() + i);\
-                daily[getDateString(d)] = 0;\
-            \}\
-            records.forEach(r => \{\
-                if (daily[r.date] !== undefined) \{\
-                    daily[r.date] += r.duration;\
-                \}\
-            \});\
-\
-            return \{ stats, daily, weekStart \};\
-        \}\
-\
-        function renderWeekStats() \{\
-            const \{ stats, daily, weekStart \} = getWeekData();\
-\
-            // \uc0\u35838 \u31243 \u32479 \u35745 \
-            weekStats.innerHTML = '';\
-            Object.entries(stats).forEach(([course, duration]) => \{\
-                const hours = (duration / 3600000).toFixed(1);\
-                const item = document.createElement('div');\
-                item.className = 'stat-item';\
-                item.innerHTML = `\
-                    <div class="stat-label">$\{course\}</div>\
-                    <div class="stat-value">$\{hours\}h</div>\
-                `;\
-                weekStats.appendChild(item);\
-            \});\
-\
-            // \uc0\u26609 \u29366 \u22270 \
-            const dailyEntries = Object.entries(daily);\
-            const maxDuration = Math.max(...dailyEntries.map(([, v]) => v), 1);\
-            const weekdays = ['\uc0\u21608 \u19968 ', '\u21608 \u20108 ', '\u21608 \u19977 ', '\u21608 \u22235 ', '\u21608 \u20116 ', '\u21608 \u20845 ', '\u21608 \u26085 '];\
-\
-            weekChart.innerHTML = '';\
-            dailyEntries.forEach(([date, duration], index) => \{\
-                const heightPercent = (duration / maxDuration) * 100;\
-                const hours = (duration / 3600000).toFixed(1);\
-\
-                const wrapper = document.createElement('div');\
-                wrapper.className = 'bar-wrapper';\
-                wrapper.innerHTML = `\
-                    <div class="bar-value">$\{hours\}h</div>\
-                    <div class="bar" style="height: $\{Math.max(heightPercent, 4)\}%;"></div>\
-                    <div class="bar-label">$\{weekdays[index]\}</div>\
-                `;\
-                weekChart.appendChild(wrapper);\
-            \});\
-        \}\
-\
-        // ==================== \uc0\u24037 \u20855 \u20989 \u25968  ====================\
-        function showToast(message) \{\
-            toast.textContent = message;\
-            toast.classList.add('show');\
-            setTimeout(() => toast.classList.remove('show'), 2500);\
-        \}\
-\
-        // ==================== \uc0\u21021 \u22987 \u21270  ====================\
-        function init() \{\
-            renderRecords();\
-            renderWeekStats();\
-        \}\
-\
-        init();\
-    </script>\
-</body>\
-</html>}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程时间记录器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .course-btn {
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .course-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .course-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .course-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .timer-display {
+            text-align: center;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #667eea;
+            font-variant-numeric: tabular-nums;
+            margin: 20px 0;
+            letter-spacing: 2px;
+        }
+
+        .timer-display.running {
+            color: #e74c3c;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .current-course {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 16px;
+            min-height: 24px;
+        }
+
+        .current-course span {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .control-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 36px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .date-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .date-nav button {
+            background: #f0f0f0;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .date-nav button:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .date-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .records-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .record-item:hover {
+            background: #eef0f5;
+        }
+
+        .record-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .record-course {
+            font-weight: 600;
+            color: #444;
+        }
+
+        .record-time {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .record-duration {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .week-chart {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            height: 150px;
+            padding: 10px 0;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 6px 6px 0 0;
+            min-height: 4px;
+            transition: height 0.5s ease;
+            position: relative;
+        }
+
+        .bar-label {
+            font-size: 0.75rem;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .bar-value {
+            font-size: 0.7rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .delete-btn:hover {
+            color: #e74c3c;
+            background: #fee;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal h3 {
+            margin-bottom: 12px;
+            color: #444;
+        }
+
+        .modal p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        @media (max-width: 600px) {
+            .timer-display { font-size: 2.5rem; }
+            .course-grid { grid-template-columns: repeat(2, 1fr); }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 课程时间记录器</h1>
+
+        <!-- 课程选择 -->
+        <div class="card">
+            <div class="card-title">🎯 选择课程</div>
+            <div class="course-grid">
+                <button class="course-btn" data-course="私教答疑">私教答疑</button>
+                <button class="course-btn" data-course="私教课程">私教课程</button>
+                <button class="course-btn" data-course="快速上手">快速上手</button>
+                <button class="course-btn" data-course="公开课">公开课</button>
+                <button class="course-btn" data-course="门店支持">门店支持</button>
+            </div>
+
+            <div class="current-course" id="currentCourse">请选择一门课程开始计时</div>
+            <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+            <div class="control-btns">
+                <button class="btn btn-primary" id="startBtn" disabled>
+                    ▶ 开始
+                </button>
+                <button class="btn btn-danger" id="stopBtn" disabled>
+                    ⏹ 结束
+                </button>
+                <button class="btn btn-secondary" id="resetBtn">
+                    ↺ 重置
+                </button>
+            </div>
+        </div>
+
+        <!-- 本周统计 -->
+        <div class="card">
+            <div class="card-title">📊 本周统计</div>
+            <div class="stats-grid" id="weekStats"></div>
+            <div style="margin-top: 20px;">
+                <div class="card-title" style="font-size: 1rem;">📈 每日时长</div>
+                <div class="week-chart" id="weekChart"></div>
+            </div>
+        </div>
+
+        <!-- 每日记录 -->
+        <div class="card">
+            <div class="date-nav">
+                <button onclick="changeDate(-1)">◀</button>
+                <div class="date-display" id="dateDisplay"></div>
+                <button onclick="changeDate(1)">▶</button>
+            </div>
+            <div class="records-list" id="recordsList"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3>⚠️ 确认删除</h3>
+            <p>确定要删除这条记录吗？此操作不可撤销。</p>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 数据管理 ====================
+        const STORAGE_KEY = 'course_timer_records';
+        
+        function getRecords() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveRecords(records) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        }
+
+        function addRecord(record) {
+            const records = getRecords();
+            records.push(record);
+            saveRecords(records);
+        }
+
+        function deleteRecord(id) {
+            const records = getRecords().filter(r => r.id !== id);
+            saveRecords(records);
+            renderRecords();
+            renderWeekStats();
+            showToast('记录已删除');
+        }
+
+        // ==================== 状态管理 ====================
+        let selectedCourse = null;
+        let startTime = null;
+        let timerInterval = null;
+        let currentDate = new Date();
+        let deleteTargetId = null;
+
+        // ==================== DOM 元素 ====================
+        const courseBtns = document.querySelectorAll('.course-btn');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const currentCourseDiv = document.getElementById('currentCourse');
+        const dateDisplay = document.getElementById('dateDisplay');
+        const recordsList = document.getElementById('recordsList');
+        const weekStats = document.getElementById('weekStats');
+        const weekChart = document.getElementById('weekChart');
+        const toast = document.getElementById('toast');
+        const modalOverlay = document.getElementById('modalOverlay');
+
+        // ==================== 课程选择 ====================
+        courseBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (timerInterval) return; // 计时中不能切换
+                
+                courseBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedCourse = btn.dataset.course;
+                currentCourseDiv.innerHTML = `已选择：<span>${selectedCourse}</span>`;
+                startBtn.disabled = false;
+            });
+        });
+
+        // ==================== 计时功能 ====================
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function formatDuration(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            const parts = [];
+            if (hours > 0) parts.push(`${hours}小时`);
+            if (minutes > 0) parts.push(`${minutes}分钟`);
+            if (seconds > 0 || parts.length === 0) parts.push(`${seconds}秒`);
+            return parts.join('');
+        }
+
+        function updateTimer() {
+            const elapsed = Date.now() - startTime;
+            timerDisplay.textContent = formatTime(elapsed);
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (!selectedCourse) return;
+            
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 100);
+            
+            timerDisplay.classList.add('running');
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            courseBtns.forEach(b => b.disabled = true);
+            currentCourseDiv.innerHTML = `正在记录：<span>${selectedCourse}</span> ⏱`;
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (!timerInterval) return;
+            
+            clearInterval(timerInterval);
+            timerInterval = null;
+            
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+            
+            if (duration < 1000) {
+                showToast('记录时间太短，已取消保存');
+                resetTimer();
+                return;
+            }
+            
+            const record = {
+                id: Date.now().toString(),
+                course: selectedCourse,
+                startTime: startTime,
+                endTime: endTime,
+                duration: duration,
+                date: new Date(startTime).toISOString().split('T')[0]
+            };
+            
+            addRecord(record);
+            
+            timerDisplay.classList.remove('running');
+            showToast(`已保存：${selectedCourse} ${formatDuration(duration)}`);
+            
+            resetTimer();
+            renderRecords();
+            renderWeekStats();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (timerInterval) {
+                if (!confirm('计时正在进行中，确定要重置吗？')) return;
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            resetTimer();
+            showToast('已重置');
+        });
+
+        function resetTimer() {
+            timerInterval = null;
+            startTime = null;
+            timerDisplay.textContent = '00:00:00';
+            timerDisplay.classList.remove('running');
+            startBtn.disabled = !selectedCourse;
+            stopBtn.disabled = true;
+            courseBtns.forEach(b => {
+                b.disabled = false;
+                b.classList.remove('active');
+            });
+            selectedCourse = null;
+            currentCourseDiv.textContent = '请选择一门课程开始计时';
+        }
+
+        // ==================== 日期导航 ====================
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            return `${y}年${m}月${d}日 ${weekdays[date.getDay()]}`;
+        }
+
+        function getDateString(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function changeDate(delta) {
+            currentDate.setDate(currentDate.getDate() + delta);
+            renderRecords();
+        }
+
+        // ==================== 记录渲染 ====================
+        function renderRecords() {
+            dateDisplay.textContent = formatDate(currentDate);
+            const targetDate = getDateString(currentDate);
+            const records = getRecords().filter(r => r.date === targetDate);
+            
+            recordsList.innerHTML = '';
+            
+            if (records.length === 0) {
+                recordsList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <div>暂无记录</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 按时间倒序
+            records.sort((a, b) => b.startTime - a.startTime);
+            
+            records.forEach(record => {
+                const start = new Date(record.startTime);
+                const timeStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+                
+                const item = document.createElement('div');
+                item.className = 'record-item';
+                item.innerHTML = `
+                    <div class="record-info">
+                        <div class="record-course">${record.course}</div>
+                        <div class="record-time">${timeStr} 开始</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="record-duration">${formatDuration(record.duration)}</div>
+                        <button class="delete-btn" onclick="showDeleteModal('${record.id}')">🗑</button>
+                    </div>
+                `;
+                recordsList.appendChild(item);
+            });
+        }
+
+        // ==================== 删除确认 ====================
+        function showDeleteModal(id) {
+            deleteTargetId = id;
+            modalOverlay.classList.add('show');
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('show');
+            deleteTargetId = null;
+        }
+
+        function confirmDelete() {
+            if (deleteTargetId) {
+                deleteRecord(deleteTargetId);
+            }
+            closeModal();
+        }
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        // ==================== 本周统计 ====================
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            d.setDate(diff);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function getWeekData() {
+            const weekStart = getWeekStart(new Date());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
+            
+            const records = getRecords().filter(r => {
+                const d = new Date(r.startTime);
+                return d >= weekStart && d <= weekEnd;
+            });
+            
+            const courses = ['私教答疑', '私教课程', '快速上手', '公开课', '门店支持'];
+            const stats = {};
+            courses.forEach(c => stats[c] = 0);
+            records.forEach(r => stats[r.course] = (stats[r.course] || 0) + r.duration);
+            
+            // 每日数据
+            const daily = {};
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() + i);
+                daily[getDateString(d)] = 0;
+            }
+            records.forEach(r => {
+                if (daily[r.date] !== undefined) {
+                    daily[r.date] += r.duration;
+                }
+            });
+            
+            return { stats, daily, weekStart };
+        }
+
+        function renderWeekStats() {
+            const { stats, daily, weekStart } = getWeekData();
+            
+            // 课程统计
+            weekStats.innerHTML = '';
+            Object.entries(stats).forEach(([course, duration]) => {
+                const hours = (duration / 3600000).toFixed(1);
+                const item = document.createElement('div');
+                item.className = 'stat-item';
+                item.innerHTML = `
+                    <div class="stat-label">${course}</div>
+                    <div class="stat-value">${hours}h</div>
+                `;
+                weekStats.appendChild(item);
+            });
+            
+            // 柱状图
+            const dailyEntries = Object.entries(daily);
+            const maxDuration = Math.max(...dailyEntries.map(([, v]) => v), 1);
+            const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            
+            weekChart.innerHTML = '';
+            dailyEntries.forEach(([date, duration], index) => {
+                const heightPercent = (duration / maxDuration) * 100;
+                const hours = (duration / 3600000).toFixed(1);
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = 'bar-wrapper';
+                wrapper.innerHTML = `
+                    <div class="bar-value">${hours}h</div>
+                    <div class="bar" style="height: ${Math.max(heightPercent, 4)}%;"></div>
+                    <div class="bar-label">${weekdays[index]}</div>
+                `;
+                weekChart.appendChild(wrapper);
+            });
+        }
+
+        // ==================== 工具函数 ====================
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ==================== 初始化 ====================
+        function init() {
+            renderRecords();
+            renderWeekStats();
+        }
+
+        init();
+    </script>
+</body>
+</html>'''
+
+with open('/mnt/agents/output/course_timer.html', 'w', encoding='utf-8') as f:
+    f.write(html_content)
+
+print("文件已保存")
