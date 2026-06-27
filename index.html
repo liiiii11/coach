@@ -465,6 +465,115 @@
             font-size: 0.85rem;
         }
 
+        .alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .alert-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .alert-box {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            max-width: 340px;
+            width: 85%;
+            text-align: center;
+            animation: alertPop 0.3s ease;
+        }
+
+        @keyframes alertPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .alert-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .alert-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #e74c3c;
+            margin-bottom: 8px;
+        }
+
+        .alert-text {
+            font-size: 1rem;
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .alert-time {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .alert-countdown {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .alert-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 48px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .sound-test {
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .sound-test-btn {
+            background: none;
+            border: 1px solid #667eea;
+            color: #667eea;
+            padding: 6px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+
+        .sound-test-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .hint-text {
+            font-size: 0.8rem;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+
         @media (max-width: 600px) {
             .timer-display { font-size: 2.5rem; }
             .course-grid { grid-template-columns: repeat(2, 1fr); }
@@ -497,6 +606,10 @@
                 <button class="btn btn-danger" id="stopBtn" disabled>结束</button>
                 <button class="btn btn-secondary" id="resetBtn">重置</button>
             </div>
+            <div class="sound-test">
+                <button class="sound-test-btn" onclick="testSound()">测试提示音</button>
+            </div>
+            <div class="hint-text">首次使用请先点击测试提示音，确保手机音量已打开</div>
         </div>
 
         <div class="card">
@@ -547,11 +660,39 @@
         </div>
     </div>
 
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-box">
+            <div class="alert-icon">&#128227;</div>
+            <div class="alert-title" id="alertTitle">时间提醒</div>
+            <div class="alert-text" id="alertText">课程已进行15分钟</div>
+            <div class="alert-time" id="alertTime">00:15:00</div>
+            <div class="alert-countdown" id="alertCountdown">提示音将在 10 秒后自动停止</div>
+            <button class="alert-btn" onclick="closeAlert()">知道了</button>
+        </div>
+    </div>
+
     <script>
-        const STORAGE_KEY = 'course_timer_records';
+        var STORAGE_KEY = 'course_timer_records';
+
+        var COURSE_ALERTS = {
+            '私教答疑': [15, 30, 60],
+            '私教课程': [30, 60, 90],
+            '快速上手': [30, 60, 90],
+            '公开课': [30, 60, 90],
+            '门店支持': [15, 30, 60]
+        };
+
+        var ALERT_SOUND_DURATION = 10000;
+
+        var alertedTimes = [];
+        var audioCtx = null;
+        var alertSoundInterval = null;
+        var alertSoundTimeout = null;
+        var alertCountdownInterval = null;
+        var alertRemainingSeconds = 0;
 
         function getRecords() {
-            const data = localStorage.getItem(STORAGE_KEY);
+            var data = localStorage.getItem(STORAGE_KEY);
             return data ? JSON.parse(data) : [];
         }
 
@@ -560,45 +701,50 @@
         }
 
         function addRecord(record) {
-            const records = getRecords();
+            var records = getRecords();
             records.push(record);
             saveRecords(records);
         }
 
         function deleteRecord(id) {
-            const records = getRecords().filter(r => r.id !== id);
+            var records = getRecords().filter(function(r) { return r.id !== id; });
             saveRecords(records);
             renderRecords();
             renderWeekStats();
             showToast('记录已删除');
         }
 
-        let selectedCourse = null;
-        let startTime = null;
-        let timerInterval = null;
-        let currentDate = new Date();
-        let deleteTargetId = null;
-        let modalCallback = null;
+        var selectedCourse = null;
+        var startTime = null;
+        var timerInterval = null;
+        var currentDate = new Date();
+        var deleteTargetId = null;
+        var modalCallback = null;
 
-        const courseBtns = document.querySelectorAll('.course-btn');
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const timerDisplay = document.getElementById('timerDisplay');
-        const currentCourseDiv = document.getElementById('currentCourse');
-        const dateDisplay = document.getElementById('dateDisplay');
-        const recordsList = document.getElementById('recordsList');
-        const weekStats = document.getElementById('weekStats');
-        const weekChart = document.getElementById('weekChart');
-        const toast = document.getElementById('toast');
-        const modalOverlay = document.getElementById('modalOverlay');
-        const importArea = document.getElementById('importArea');
-        const importTextarea = document.getElementById('importTextarea');
+        var courseBtns = document.querySelectorAll('.course-btn');
+        var startBtn = document.getElementById('startBtn');
+        var stopBtn = document.getElementById('stopBtn');
+        var resetBtn = document.getElementById('resetBtn');
+        var timerDisplay = document.getElementById('timerDisplay');
+        var currentCourseDiv = document.getElementById('currentCourse');
+        var dateDisplay = document.getElementById('dateDisplay');
+        var recordsList = document.getElementById('recordsList');
+        var weekStats = document.getElementById('weekStats');
+        var weekChart = document.getElementById('weekChart');
+        var toast = document.getElementById('toast');
+        var modalOverlay = document.getElementById('modalOverlay');
+        var importArea = document.getElementById('importArea');
+        var importTextarea = document.getElementById('importTextarea');
+        var alertOverlay = document.getElementById('alertOverlay');
+        var alertTitle = document.getElementById('alertTitle');
+        var alertText = document.getElementById('alertText');
+        var alertTime = document.getElementById('alertTime');
+        var alertCountdown = document.getElementById('alertCountdown');
 
-        courseBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
+        courseBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
                 if (timerInterval) return;
-                courseBtns.forEach(b => b.classList.remove('active'));
+                courseBtns.forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 selectedCourse = btn.dataset.course;
                 currentCourseDiv.innerHTML = '已选择：<span>' + selectedCourse + '</span>';
@@ -607,19 +753,19 @@
         });
 
         function formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
+            var totalSeconds = Math.floor(ms / 1000);
+            var hours = Math.floor(totalSeconds / 3600);
+            var minutes = Math.floor((totalSeconds % 3600) / 60);
+            var seconds = totalSeconds % 60;
             return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
         }
 
         function formatDuration(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            const parts = [];
+            var totalSeconds = Math.floor(ms / 1000);
+            var hours = Math.floor(totalSeconds / 3600);
+            var minutes = Math.floor((totalSeconds % 3600) / 60);
+            var seconds = totalSeconds % 60;
+            var parts = [];
             if (hours > 0) parts.push(hours + '小时');
             if (minutes > 0) parts.push(minutes + '分钟');
             if (seconds > 0 || parts.length === 0) parts.push(seconds + '秒');
@@ -627,49 +773,175 @@
         }
 
         function formatDurationDecimal(ms) {
-            const hours = (ms / 3600000).toFixed(2);
+            var hours = (ms / 3600000).toFixed(2);
             return hours;
         }
 
         function formatDateTime(timestamp) {
-            const d = new Date(timestamp);
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const h = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
-            const s = String(d.getSeconds()).padStart(2, '0');
+            var d = new Date(timestamp);
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            var h = String(d.getHours()).padStart(2, '0');
+            var min = String(d.getMinutes()).padStart(2, '0');
+            var s = String(d.getSeconds()).padStart(2, '0');
             return y + '-' + m + '-' + day + ' ' + h + ':' + min + ':' + s;
         }
 
-        function updateTimer() {
-            const elapsed = Date.now() - startTime;
-            timerDisplay.textContent = formatTime(elapsed);
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
         }
 
-        startBtn.addEventListener('click', () => {
+        function playBeep(now, freq, duration, delay) {
+            if (!audioCtx) return;
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + delay);
+            gain.gain.setValueAtTime(0.25, now + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + duration);
+        }
+
+        function playAlertSoundOnce() {
+            initAudio();
+            if (!audioCtx) return;
+            var now = audioCtx.currentTime;
+            playBeep(now, 880, 0.15, 0);
+            playBeep(now, 1100, 0.15, 0.2);
+            playBeep(now, 1320, 0.2, 0.4);
+            playBeep(now, 880, 0.3, 0.65);
+        }
+
+        function startAlertSound() {
+            stopAlertSound();
+            playAlertSoundOnce();
+            alertSoundInterval = setInterval(function() {
+                playAlertSoundOnce();
+            }, 1500);
+
+            alertRemainingSeconds = Math.floor(ALERT_SOUND_DURATION / 1000);
+            updateAlertCountdown();
+
+            alertCountdownInterval = setInterval(function() {
+                alertRemainingSeconds--;
+                updateAlertCountdown();
+                if (alertRemainingSeconds <= 0) {
+                    stopAlertSound();
+                }
+            }, 1000);
+
+            alertSoundTimeout = setTimeout(function() {
+                stopAlertSound();
+            }, ALERT_SOUND_DURATION);
+        }
+
+        function updateAlertCountdown() {
+            if (alertCountdown) {
+                alertCountdown.textContent = '提示音将在 ' + alertRemainingSeconds + ' 秒后自动停止';
+            }
+        }
+
+        function stopAlertSound() {
+            if (alertSoundInterval) {
+                clearInterval(alertSoundInterval);
+                alertSoundInterval = null;
+            }
+            if (alertSoundTimeout) {
+                clearTimeout(alertSoundTimeout);
+                alertSoundTimeout = null;
+            }
+            if (alertCountdownInterval) {
+                clearInterval(alertCountdownInterval);
+                alertCountdownInterval = null;
+            }
+            if (alertCountdown) {
+                alertCountdown.textContent = '提示音已停止';
+            }
+        }
+
+        function showAlert(minutes) {
+            alertTitle.textContent = '时间提醒';
+            alertText.textContent = selectedCourse + ' 已进行 ' + minutes + ' 分钟';
+            alertTime.textContent = formatTime(minutes * 60000);
+            alertOverlay.classList.add('show');
+            startAlertSound();
+
+            if (navigator.vibrate) {
+                navigator.vibrate([300, 150, 300, 150, 500]);
+            }
+        }
+
+        function closeAlert() {
+            stopAlertSound();
+            alertOverlay.classList.remove('show');
+        }
+
+        function testSound() {
+            initAudio();
+            alertTitle.textContent = '测试提示音';
+            alertText.textContent = '这是测试，实际提醒时会显示课程信息';
+            alertTime.textContent = '00:10:00';
+            alertOverlay.classList.add('show');
+            startAlertSound();
+            showToast('提示音测试成功');
+        }
+
+        function checkAlerts() {
+            if (!selectedCourse || !COURSE_ALERTS[selectedCourse]) return;
+
+            var elapsed = Date.now() - startTime;
+            var elapsedMinutes = Math.floor(elapsed / 60000);
+            var alertMinutes = COURSE_ALERTS[selectedCourse];
+
+            for (var i = 0; i < alertMinutes.length; i++) {
+                var targetMin = alertMinutes[i];
+                if (elapsedMinutes >= targetMin && alertedTimes.indexOf(targetMin) === -1) {
+                    alertedTimes.push(targetMin);
+                    showAlert(targetMin);
+                }
+            }
+        }
+
+        function updateTimer() {
+            var elapsed = Date.now() - startTime;
+            timerDisplay.textContent = formatTime(elapsed);
+            checkAlerts();
+        }
+
+        startBtn.addEventListener('click', function() {
             if (!selectedCourse) return;
+            initAudio();
             startTime = Date.now();
+            alertedTimes = [];
             timerInterval = setInterval(updateTimer, 100);
             timerDisplay.classList.add('running');
             startBtn.disabled = true;
             stopBtn.disabled = false;
-            courseBtns.forEach(b => b.disabled = true);
+            courseBtns.forEach(function(b) { b.disabled = true; });
             currentCourseDiv.innerHTML = '正在记录：<span>' + selectedCourse + '</span>';
         });
 
-        stopBtn.addEventListener('click', () => {
+        stopBtn.addEventListener('click', function() {
             if (!timerInterval) return;
             clearInterval(timerInterval);
             timerInterval = null;
-            const endTime = Date.now();
-            const duration = endTime - startTime;
+            var endTime = Date.now();
+            var duration = endTime - startTime;
             if (duration < 1000) {
                 showToast('记录时间太短，已取消保存');
                 resetTimer();
                 return;
             }
-            const record = {
+            var record = {
                 id: Date.now().toString(),
                 course: selectedCourse,
                 startTime: startTime,
@@ -685,7 +957,7 @@
             renderWeekStats();
         });
 
-        resetBtn.addEventListener('click', () => {
+        resetBtn.addEventListener('click', function() {
             if (timerInterval) {
                 if (!confirm('计时正在进行中，确定要重置吗？')) return;
                 clearInterval(timerInterval);
@@ -698,11 +970,12 @@
         function resetTimer() {
             timerInterval = null;
             startTime = null;
+            alertedTimes = [];
             timerDisplay.textContent = '00:00:00';
             timerDisplay.classList.remove('running');
             startBtn.disabled = !selectedCourse;
             stopBtn.disabled = true;
-            courseBtns.forEach(b => {
+            courseBtns.forEach(function(b) {
                 b.disabled = false;
                 b.classList.remove('active');
             });
@@ -710,9 +983,8 @@
             currentCourseDiv.textContent = '请选择一门课程开始计时';
         }
 
-        // ==================== 导出CSV表格 ====================
         function exportCSV() {
-            const records = getRecords();
+            var records = getRecords();
             if (records.length === 0) {
                 showToast('没有数据可导出');
                 return;
@@ -761,7 +1033,6 @@
             showToast('表格已下载：' + filename);
         }
 
-        // ==================== 导入数据 ====================
         function toggleImport() {
             importArea.classList.toggle('show');
             if (importArea.classList.contains('show')) {
@@ -819,7 +1090,6 @@
             });
         }
 
-        // ==================== 模态框 ====================
         function showModal(title, text, callback) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalText').textContent = text;
@@ -857,7 +1127,6 @@
             modalOverlay.classList.add('show');
         }
 
-        // ==================== 日期和记录 ====================
         function formatDate(date) {
             var y = date.getFullYear();
             var m = String(date.getMonth() + 1).padStart(2, '0');
@@ -895,7 +1164,6 @@
             });
         }
 
-        // ==================== 本周统计 ====================
         function getWeekStart(date) {
             var d = new Date(date);
             var day = d.getDay();
