@@ -349,6 +349,8 @@
             flex-direction: column;
             align-items: center;
             gap: 6px;
+            height: 100%;
+            justify-content: flex-end;
         }
 
         .bar {
@@ -762,9 +764,13 @@
 
         <div class="card">
             <div class="card-title">本周统计</div>
+            <div id="weekTotalStats" style="margin-bottom: 16px;"></div>
             <div class="stats-grid" id="weekStats"></div>
             <div style="margin-top: 20px;">
-                <div class="card-title" style="font-size: 1rem;">每日时长</div>
+                <div class="card-title" style="font-size: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span id="chartTitle">每日时长（全部）</span>
+                    <span style="font-size: 0.8rem; color: #999; font-weight: normal;">点击上方课程切换</span>
+                </div>
                 <div class="week-chart" id="weekChart"></div>
             </div>
         </div>
@@ -847,6 +853,7 @@
         var alertRemainingSeconds = 0;
         var editingRecordId = null;
         var audioUnlocked = false;
+        var selectedWeekCourse = null; // 当前选中的周统计课程（null=全部）
 
         function getRecords() {
             var data = localStorage.getItem(STORAGE_KEY);
@@ -939,6 +946,31 @@
             events.forEach(function(event) {
                 document.addEventListener(event, unlockAudio, { once: true });
             });
+
+            // 页面从后台切回时重新激活音频上下文，并检查遗漏的提醒
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    initAudio();
+                    // 如果正在计时，检查是否有遗漏的提醒
+                    // Worker 在后台保持运行，但主线程的 checkAlerts 可能被延迟
+                    // 页面切回时立即补偿检查
+                    if (timerInterval && startTime && selectedCourse) {
+                        // 强制重新计算当前经过时间并检查所有提醒点
+                        var elapsed = Date.now() - startTime;
+                        var elapsedMinutes = Math.floor(elapsed / 60000);
+                        var alertMinutes = COURSE_ALERTS[selectedCourse];
+                        if (alertMinutes) {
+                            for (var i = 0; i < alertMinutes.length; i++) {
+                                var targetMin = alertMinutes[i];
+                                if (elapsedMinutes >= targetMin && alertedTimes.indexOf(targetMin) === -1) {
+                                    alertedTimes.push(targetMin);
+                                    showAlert(targetMin);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         courseBtns.forEach(function(btn) {
@@ -1000,10 +1032,16 @@
 
         function initAudio() {
             if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    console.log('Web Audio API 不可用');
+                }
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+            if (audioCtx && (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted')) {
+                audioCtx.resume().catch(function(e) {
+                    console.log('resume 失败', e);
+                });
             }
         }
 
@@ -1023,16 +1061,86 @@
 
         function playAlertSoundOnce() {
             initAudio();
-            if (!audioCtx) return;
-            // 确保音频上下文处于运行状态（浏览器可能在长时间后自动暂停）
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+            var played = false;
+
+            // 尝试 Web Audio API
+            if (audioCtx) {
+                try {
+                    var now = audioCtx.currentTime;
+                    playBeep(now, 880, 0.15, 0);
+                    playBeep(now, 1100, 0.15, 0.2);
+                    playBeep(now, 1320, 0.2, 0.4);
+                    playBeep(now, 880, 0.3, 0.65);
+                    played = true;
+                } catch(e) {
+                    console.log('Web Audio 播放失败', e);
+                }
             }
-            var now = audioCtx.currentTime;
-            playBeep(now, 880, 0.15, 0);
-            playBeep(now, 1100, 0.15, 0.2);
-            playBeep(now, 1320, 0.2, 0.4);
-            playBeep(now, 880, 0.3, 0.65);
+
+            // 备用：使用 HTML5 Audio 元素播放提示音
+            if (!played) {
+                try {
+                    playFallbackBeep();
+                } catch(e) {
+                    console.log('备用音频也失败', e);
+                }
+            }
+        }
+
+        // 备用提示音：使用 oscillator 生成 data URI
+        function playFallbackBeep() {
+            // 创建简短的双声道 beep
+            var sampleRate = 44100;
+            var duration = 0.5;
+            var numSamples = sampleRate * duration;
+            var buffer = new Uint8Array(44 + numSamples * 2);
+
+            // WAV 头部
+            var view = new DataView(buffer.buffer);
+            var writeString = function(offset, string) {
+                for (var i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + numSamples * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, numSamples * 2, true);
+
+            // 生成 beep 音（880Hz + 1100Hz 双音）
+            for (var i = 0; i < numSamples; i++) {
+                var t = i / sampleRate;
+                var sample = 0;
+                if (t < 0.15) sample = Math.sin(2 * Math.PI * 880 * t);
+                else if (t < 0.3) sample = Math.sin(2 * Math.PI * 1100 * (t - 0.15));
+                else if (t < 0.5) sample = Math.sin(2 * Math.PI * 880 * (t - 0.3));
+
+                // 添加淡出
+                if (t > 0.4) sample *= (0.5 - t) * 10;
+
+                sample = Math.max(-1, Math.min(1, sample));
+                view.setInt16(44 + i * 2, sample * 0x7FFF, true);
+            }
+
+            var blob = new Blob([buffer], { type: 'audio/wav' });
+            var url = URL.createObjectURL(blob);
+            var audio = new Audio(url);
+            audio.play().then(function() {
+                setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+            }).catch(function(e) {
+                console.log('备用音频播放失败', e);
+                URL.revokeObjectURL(url);
+            });
         }
 
         function startAlertSound() {
@@ -1130,7 +1238,13 @@
             var elapsed = Date.now() - startTime;
             timerDisplay.textContent = formatTime(elapsed);
             checkAlerts();
+            // 每秒刷新本周统计，让柱状图随计时实时更新
+            if (Math.floor(elapsed / 1000) !== updateTimer.lastSecond) {
+                updateTimer.lastSecond = Math.floor(elapsed / 1000);
+                renderWeekStats();
+            }
         }
+        updateTimer.lastSecond = -1;
 
         startBtn.addEventListener('click', function() {
             if (!selectedCourse) return;
@@ -1142,6 +1256,8 @@
             startTime = Date.now();
             alertedTimes = [];
             timerInterval = setInterval(updateTimer, 100);
+            // 启动 Web Worker 后台计时器，避免浏览器节流导致提醒丢失
+            startTimerWorker();
             timerDisplay.classList.add('running');
             startBtn.disabled = true;
             stopBtn.disabled = false;
@@ -1153,6 +1269,7 @@
             if (!timerInterval) return;
             clearInterval(timerInterval);
             timerInterval = null;
+            stopTimerWorker();
             var endTime = Date.now();
             var duration = endTime - startTime;
             if (duration < 1000) {
@@ -1166,7 +1283,7 @@
                 startTime: startTime,
                 endTime: endTime,
                 duration: duration,
-                date: new Date(startTime).toISOString().split('T')[0]
+                date: getDateString(startTime)
             };
             addRecord(record);
             timerDisplay.classList.remove('running');
@@ -1190,6 +1307,7 @@
             timerInterval = null;
             startTime = null;
             alertedTimes = [];
+            stopTimerWorker();
             timerDisplay.textContent = '00:00:00';
             timerDisplay.classList.remove('running');
             startBtn.disabled = !selectedCourse;
@@ -1262,7 +1380,7 @@
                 startTime: startDate.getTime(),
                 endTime: endDate.getTime(),
                 duration: duration,
-                date: date
+                date: getDateString(startDate)
             };
 
             var records = getRecords();
@@ -1322,7 +1440,7 @@
                     records[i].startTime = newStart;
                     records[i].endTime = newEnd;
                     records[i].duration = newDuration;
-                    records[i].date = new Date(newStart).toISOString().split('T')[0];
+                    records[i].date = getDateString(newStart);
                     break;
                 }
             }
@@ -1496,7 +1614,11 @@
         }
 
         function getDateString(date) {
-            return date.toISOString().split('T')[0];
+            var d = new Date(date);
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
         }
 
         function changeDate(delta) {
@@ -1538,14 +1660,18 @@
             return d;
         }
 
-        function getWeekData() {
+        function getWeekData(courseFilter) {
             var weekStart = getWeekStart(new Date());
             var weekEnd = new Date(weekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             weekEnd.setHours(23, 59, 59, 999);
             var records = getRecords().filter(function(r) {
                 var d = new Date(r.startTime);
-                return d >= weekStart && d <= weekEnd;
+                var inRange = d >= weekStart && d <= weekEnd;
+                if (courseFilter) {
+                    return inRange && r.course === courseFilter;
+                }
+                return inRange;
             });
             var courses = ['私教答疑', '私教课程', '快速上手', '公开课', '门店支持'];
             var stats = {};
@@ -1562,35 +1688,93 @@
                     daily[r.date] += r.duration;
                 }
             });
+
+            // 如果当前正在计时，累加当前计时的时间
+            if (timerInterval && startTime && selectedCourse) {
+                var now = Date.now();
+                var currentDuration = now - startTime;
+                var todayStr = getDateString(new Date());
+                // 累加到对应课程
+                stats[selectedCourse] = (stats[selectedCourse] || 0) + currentDuration;
+                // 累加到对应日期
+                if (daily[todayStr] !== undefined) {
+                    daily[todayStr] += currentDuration;
+                }
+            }
+
             return { stats: stats, daily: daily, weekStart: weekStart };
         }
 
         function renderWeekStats() {
-            var data = getWeekData();
-            var stats = data.stats;
-            var daily = data.daily;
+            // 获取全部数据（用于总计和课程统计）
+            var allData = getWeekData();
+            var stats = allData.stats;
+
+            // 计算每周总分钟数
+            var totalMinutes = 0;
+            Object.entries(stats).forEach(function(entry) {
+                totalMinutes += Math.floor(entry[1] / 60000);
+            });
+
+            // 渲染总计卡片（单独一行，全宽）
+            var weekTotalStats = document.getElementById('weekTotalStats');
+            weekTotalStats.innerHTML = '';
+            var totalItem = document.createElement('div');
+            totalItem.className = 'stat-item';
+            totalItem.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; width: 100%; max-width: 100%;';
+            totalItem.innerHTML = '<div class="stat-label" style="color: rgba(255,255,255,0.9);">本周总计</div><div class="stat-value" style="color: white;">' + totalMinutes + '分</div>';
+            totalItem.onclick = function() {
+                selectedWeekCourse = null;
+                renderWeekStats();
+            };
+            weekTotalStats.appendChild(totalItem);
+
+            // 渲染各课程卡片（可点击）
             weekStats.innerHTML = '';
             Object.entries(stats).forEach(function(entry) {
                 var course = entry[0];
                 var duration = entry[1];
-                var hours = (duration / 3600000).toFixed(1);
+                var minutes = Math.floor(duration / 60000);
                 var item = document.createElement('div');
                 item.className = 'stat-item';
-                item.innerHTML = '<div class="stat-label">' + course + '</div><div class="stat-value">' + hours + 'h</div>';
+                // 选中状态样式
+                if (selectedWeekCourse === course) {
+                    item.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer;';
+                    item.innerHTML = '<div class="stat-label" style="color: rgba(255,255,255,0.9);">' + course + '</div><div class="stat-value" style="color: white;">' + minutes + '分</div>';
+                } else {
+                    item.style.cssText = 'cursor: pointer;';
+                    item.innerHTML = '<div class="stat-label">' + course + '</div><div class="stat-value">' + minutes + '分</div>';
+                }
+                item.onclick = function() {
+                    selectedWeekCourse = course;
+                    renderWeekStats();
+                };
                 weekStats.appendChild(item);
             });
+
+            // 根据选中课程获取对应的每日数据
+            var chartData = getWeekData(selectedWeekCourse);
+            var daily = chartData.daily;
             var dailyEntries = Object.entries(daily);
-            var maxDuration = Math.max.apply(null, dailyEntries.map(function(e) { return e[1]; }).concat([1]));
+            // 使用本周实际最大时长作为 max，确保柱子高度能反映变化
+            // 同时设置一个最小基准（1小时），避免单条记录时柱子永远是满的
+            var rawMax = Math.max.apply(null, dailyEntries.map(function(e) { return e[1]; }));
+            var maxDuration = Math.max(rawMax, 3600000); // 至少以1小时为基准
             var weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+            // 更新图表标题
+            var chartTitle = document.getElementById('chartTitle');
+            chartTitle.textContent = selectedWeekCourse ? '每日时长（' + selectedWeekCourse + '）' : '每日时长（全部）';
+
             weekChart.innerHTML = '';
             dailyEntries.forEach(function(entry, index) {
                 var date = entry[0];
                 var duration = entry[1];
                 var heightPercent = (duration / maxDuration) * 100;
-                var hours = (duration / 3600000).toFixed(1);
+                var minutes = Math.floor(duration / 60000);
                 var wrapper = document.createElement('div');
                 wrapper.className = 'bar-wrapper';
-                wrapper.innerHTML = '<div class="bar-value">' + hours + 'h</div><div class="bar" style="height:' + Math.max(heightPercent, 4) + '%;"></div><div class="bar-label">' + weekdays[index] + '</div>';
+                wrapper.innerHTML = '<div class="bar-value">' + minutes + '分</div><div class="bar" style="height:' + Math.max(heightPercent, 4) + '%;"></div><div class="bar-label">' + weekdays[index] + '</div>';
                 weekChart.appendChild(wrapper);
             });
         }
@@ -1601,7 +1785,53 @@
             setTimeout(function() { toast.classList.remove('show'); }, 2500);
         }
 
-        function init() {
+                // ==================== Web Worker 后台计时器 ====================
+        var timerWorker = null;
+        var workerScriptURL = null;
+
+        function initTimerWorker() {
+            if (timerWorker) return;
+
+            var workerScript = `
+                var tickInterval = null;
+                self.onmessage = function(e) {
+                    if (e.data === 'start') {
+                        if (tickInterval) clearInterval(tickInterval);
+                        tickInterval = setInterval(function() {
+                            self.postMessage('tick');
+                        }, 1000);
+                    } else if (e.data === 'stop') {
+                        if (tickInterval) {
+                            clearInterval(tickInterval);
+                            tickInterval = null;
+                        }
+                    }
+                };
+            `;
+
+            var blob = new Blob([workerScript], { type: 'application/javascript' });
+            workerScriptURL = URL.createObjectURL(blob);
+            timerWorker = new Worker(workerScriptURL);
+
+            timerWorker.onmessage = function(e) {
+                if (e.data === 'tick' && timerInterval && startTime && selectedCourse) {
+                    // Worker 每秒发送一次 tick，用于检查提醒
+                    // 即使主线程被节流，Worker 仍然能正常工作
+                    checkAlerts();
+                }
+            };
+        }
+
+        function startTimerWorker() {
+            if (!timerWorker) initTimerWorker();
+            if (timerWorker) timerWorker.postMessage('start');
+        }
+
+        function stopTimerWorker() {
+            if (timerWorker) timerWorker.postMessage('stop');
+        }
+
+function init() {
             setupAudioUnlock();
             renderRecords();
             renderWeekStats();
