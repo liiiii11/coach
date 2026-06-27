@@ -673,6 +673,7 @@
         }
     </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
     <div class="container">
@@ -719,7 +720,8 @@
                         <option value="">请选择课程</option>
                         <option value="私教答疑">私教答疑</option>
                         <option value="私教课程">私教课程</option>
-                        <option value="快速上手">快速上手</n                        <option value="公开课">公开课</option>
+                        <option value="快速上手">快速上手</option>
+                        <option value="公开课">公开课</option>
                         <option value="门店支持">门店支持</option>
                     </select>
                 </div>
@@ -1022,6 +1024,10 @@
         function playAlertSoundOnce() {
             initAudio();
             if (!audioCtx) return;
+            // 确保音频上下文处于运行状态（浏览器可能在长时间后自动暂停）
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
             var now = audioCtx.currentTime;
             playBeep(now, 880, 0.15, 0);
             playBeep(now, 1100, 0.15, 0.2);
@@ -1129,6 +1135,10 @@
         startBtn.addEventListener('click', function() {
             if (!selectedCourse) return;
             unlockAudio();
+            // 确保音频上下文在开始计时时已激活
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
             startTime = Date.now();
             alertedTimes = [];
             timerInterval = setInterval(updateTimer, 100);
