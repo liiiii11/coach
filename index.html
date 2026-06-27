@@ -175,6 +175,17 @@
             background: #e0e0e0;
         }
 
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #219a52 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.5);
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -282,13 +293,6 @@
             text-align: center;
             padding: 40px;
             color: #999;
-        }
-
-        .empty-state svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 12px;
-            opacity: 0.5;
         }
 
         .week-chart {
@@ -412,10 +416,61 @@
             justify-content: center;
         }
 
+        .data-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .data-actions .btn {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        .import-area {
+            margin-top: 16px;
+            display: none;
+        }
+
+        .import-area.show {
+            display: block;
+        }
+
+        .import-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            resize: vertical;
+        }
+
+        .import-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .import-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+
+        .import-actions .btn {
+            padding: 8px 20px;
+            font-size: 0.85rem;
+        }
+
         @media (max-width: 600px) {
             .timer-display { font-size: 2.5rem; }
             .course-grid { grid-template-columns: repeat(2, 1fr); }
             h1 { font-size: 1.5rem; }
+            .data-actions { flex-direction: column; }
+            .data-actions .btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -444,6 +499,22 @@
         </div>
 
         <div class="card">
+            <div class="card-title">数据管理</div>
+            <div class="data-actions">
+                <button class="btn btn-success" onclick="exportData()">导出数据</button>
+                <button class="btn btn-primary" onclick="toggleImport()">导入数据</button>
+                <button class="btn btn-danger" onclick="clearAllData()">清空所有</button>
+            </div>
+            <div class="import-area" id="importArea">
+                <textarea class="import-textarea" id="importTextarea" placeholder="请粘贴之前导出的JSON数据..."></textarea>
+                <div class="import-actions">
+                    <button class="btn btn-secondary" onclick="toggleImport()">取消</button>
+                    <button class="btn btn-success" onclick="importData()">确认导入</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="card-title">本周统计</div>
             <div class="stats-grid" id="weekStats"></div>
             <div style="margin-top: 20px;">
@@ -466,11 +537,11 @@
 
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
-            <h3>确认删除</h3>
-            <p>确定要删除这条记录吗？此操作不可撤销。</p>
+            <h3 id="modalTitle">确认删除</h3>
+            <p id="modalText">确定要删除这条记录吗？此操作不可撤销。</p>
             <div class="modal-btns">
                 <button class="btn btn-secondary" onclick="closeModal()">取消</button>
-                <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
+                <button class="btn btn-danger" id="modalConfirmBtn" onclick="confirmDelete()">删除</button>
             </div>
         </div>
     </div>
@@ -506,6 +577,7 @@
         let timerInterval = null;
         let currentDate = new Date();
         let deleteTargetId = null;
+        let modalCallback = null;
 
         const courseBtns = document.querySelectorAll('.course-btn');
         const startBtn = document.getElementById('startBtn');
@@ -519,6 +591,8 @@
         const weekChart = document.getElementById('weekChart');
         const toast = document.getElementById('toast');
         const modalOverlay = document.getElementById('modalOverlay');
+        const importArea = document.getElementById('importArea');
+        const importTextarea = document.getElementById('importTextarea');
 
         courseBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -619,6 +693,146 @@
             currentCourseDiv.textContent = '请选择一门课程开始计时';
         }
 
+        // ==================== 数据导出导入 ====================
+        function exportData() {
+            const records = getRecords();
+            if (records.length === 0) {
+                showToast('没有数据可导出');
+                return;
+            }
+            const data = {
+                version: '1.0',
+                exportTime: new Date().toISOString(),
+                recordCount: records.length,
+                records: records
+            };
+            const jsonStr = JSON.stringify(data, null, 2);
+            
+            // 复制到剪贴板
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(jsonStr).then(() => {
+                    showToast('数据已复制到剪贴板，请粘贴保存');
+                }).catch(() => {
+                    fallbackCopy(jsonStr);
+                });
+            } else {
+                fallbackCopy(jsonStr);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('数据已复制到剪贴板，请粘贴保存');
+            } catch (err) {
+                showToast('复制失败，请手动复制弹出的内容');
+                alert('请全选并复制以下内容保存：\\n\\n' + text.substring(0, 500) + '...');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function toggleImport() {
+            importArea.classList.toggle('show');
+            if (importArea.classList.contains('show')) {
+                importTextarea.focus();
+            } else {
+                importTextarea.value = '';
+            }
+        }
+
+        function importData() {
+            const text = importTextarea.value.trim();
+            if (!text) {
+                showToast('请输入要导入的数据');
+                return;
+            }
+            try {
+                const data = JSON.parse(text);
+                let records = [];
+                if (data.records && Array.isArray(data.records)) {
+                    records = data.records;
+                } else if (Array.isArray(data)) {
+                    records = data;
+                } else {
+                    showToast('数据格式不正确');
+                    return;
+                }
+                if (records.length === 0) {
+                    showToast('导入的数据为空');
+                    return;
+                }
+                
+                showModal('确认导入', '确定要导入 ' + records.length + ' 条记录吗？这将覆盖现有数据。', () => {
+                    saveRecords(records);
+                    renderRecords();
+                    renderWeekStats();
+                    toggleImport();
+                    showToast('成功导入 ' + records.length + ' 条记录');
+                });
+            } catch (e) {
+                showToast('数据格式错误，请检查JSON格式');
+            }
+        }
+
+        function clearAllData() {
+            const records = getRecords();
+            if (records.length === 0) {
+                showToast('没有数据可清空');
+                return;
+            }
+            showModal('确认清空', '确定要清空所有 ' + records.length + ' 条记录吗？此操作不可撤销！建议先导出备份。', () => {
+                localStorage.removeItem(STORAGE_KEY);
+                renderRecords();
+                renderWeekStats();
+                showToast('所有数据已清空');
+            });
+        }
+
+        // ==================== 模态框 ====================
+        function showModal(title, text, callback) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalText').textContent = text;
+            document.getElementById('modalConfirmBtn').textContent = '确认';
+            modalCallback = callback;
+            modalOverlay.classList.add('show');
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('show');
+            modalCallback = null;
+        }
+
+        function confirmDelete() {
+            if (deleteTargetId) {
+                deleteRecord(deleteTargetId);
+                deleteTargetId = null;
+            } else if (modalCallback) {
+                modalCallback();
+                modalCallback = null;
+            }
+            closeModal();
+        }
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        function showDeleteModal(id) {
+            deleteTargetId = id;
+            document.getElementById('modalTitle').textContent = '确认删除';
+            document.getElementById('modalText').textContent = '确定要删除这条记录吗？此操作不可撤销。';
+            document.getElementById('modalConfirmBtn').textContent = '删除';
+            modalCallback = null;
+            modalOverlay.classList.add('show');
+        }
+
+        // ==================== 日期和记录 ====================
         function formatDate(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -656,27 +870,7 @@
             });
         }
 
-        function showDeleteModal(id) {
-            deleteTargetId = id;
-            modalOverlay.classList.add('show');
-        }
-
-        function closeModal() {
-            modalOverlay.classList.remove('show');
-            deleteTargetId = null;
-        }
-
-        function confirmDelete() {
-            if (deleteTargetId) {
-                deleteRecord(deleteTargetId);
-            }
-            closeModal();
-        }
-
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) closeModal();
-        });
-
+        // ==================== 本周统计 ====================
         function getWeekStart(date) {
             const d = new Date(date);
             const day = d.getDay();
@@ -751,5 +945,4 @@
         init();
     </script>
 </body>
-</html>'''
-
+</html>
