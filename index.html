@@ -261,6 +261,7 @@
             border-radius: 10px;
             margin-bottom: 8px;
             transition: all 0.2s;
+            cursor: pointer;
         }
 
         .record-item:hover {
@@ -287,6 +288,45 @@
             font-weight: 700;
             color: #667eea;
             font-size: 1.1rem;
+        }
+
+        .record-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .edit-btn:hover {
+            background: #eef0ff;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .delete-btn:hover {
+            color: #e74c3c;
+            background: #fee;
         }
 
         .empty-state {
@@ -330,23 +370,6 @@
             font-size: 0.7rem;
             color: #667eea;
             font-weight: 600;
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #ccc;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: all 0.2s;
-            font-size: 1rem;
-            font-family: inherit;
-        }
-
-        .delete-btn:hover {
-            color: #e74c3c;
-            background: #fee;
         }
 
         .toast {
@@ -465,6 +488,51 @@
             font-size: 0.85rem;
         }
 
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .add-record-area {
+            margin-top: 16px;
+            display: none;
+        }
+
+        .add-record-area.show {
+            display: block;
+        }
+
         .alert-overlay {
             position: fixed;
             top: 0;
@@ -574,12 +642,34 @@
             margin-top: 8px;
         }
 
+        .audio-status {
+            text-align: center;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .audio-status.ready {
+            display: block;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .audio-status.need-interaction {
+            display: block;
+            background: #fff3e0;
+            color: #e65100;
+        }
+
         @media (max-width: 600px) {
             .timer-display { font-size: 2.5rem; }
             .course-grid { grid-template-columns: repeat(2, 1fr); }
             h1 { font-size: 1.5rem; }
             .data-actions { flex-direction: column; }
             .data-actions .btn { width: 100%; justify-content: center; }
+            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 <base target="_blank">
@@ -607,9 +697,10 @@
                 <button class="btn btn-secondary" id="resetBtn">重置</button>
             </div>
             <div class="sound-test">
-                <button class="sound-test-btn" onclick="testSound()">测试提示音</button>
+                <button class="sound-test-btn" id="testSoundBtn" onclick="testSound()">测试提示音</button>
             </div>
             <div class="hint-text">首次使用请先点击测试提示音，确保手机音量已打开</div>
+            <div class="audio-status need-interaction" id="audioStatus">请点击"测试提示音"按钮激活音频</div>
         </div>
 
         <div class="card">
@@ -617,8 +708,47 @@
             <div class="data-actions">
                 <button class="btn btn-success" onclick="exportCSV()">导出表格</button>
                 <button class="btn btn-primary" onclick="toggleImport()">导入数据</button>
+                <button class="btn btn-primary" onclick="toggleAddRecord()">手动添加</button>
                 <button class="btn btn-danger" onclick="clearAllData()">清空所有</button>
             </div>
+
+            <div class="add-record-area" id="addRecordArea">
+                <div class="form-group">
+                    <label>课程</label>
+                    <select id="manualCourse">
+                        <option value="">请选择课程</option>
+                        <option value="私教答疑">私教答疑</option>
+                        <option value="私教课程">私教课程</option>
+                        <option value="快速上手">快速上手</n                        <option value="公开课">公开课</option>
+                        <option value="门店支持">门店支持</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input type="date" id="manualDate">
+                    </div>
+                    <div class="form-group">
+                        <label>开始时间</label>
+                        <input type="time" id="manualStartTime">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>结束时间</label>
+                        <input type="time" id="manualEndTime">
+                    </div>
+                    <div class="form-group">
+                        <label>时长（分钟，可选）</label>
+                        <input type="number" id="manualDuration" placeholder="自动计算" min="1">
+                    </div>
+                </div>
+                <div class="import-actions">
+                    <button class="btn btn-secondary" onclick="toggleAddRecord()">取消</button>
+                    <button class="btn btn-success" onclick="addManualRecord()">确认添加</button>
+                </div>
+            </div>
+
             <div class="import-area" id="importArea">
                 <textarea class="import-textarea" id="importTextarea" placeholder="请粘贴之前导出的JSON数据..."></textarea>
                 <div class="import-actions">
@@ -660,6 +790,29 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="editModalOverlay">
+        <div class="modal">
+            <h3>修改记录时间</h3>
+            <div style="text-align:left; margin-bottom:16px;">
+                <div class="form-group">
+                    <label>课程：<span id="editCourseName" style="color:#667eea;font-weight:600;"></span></label>
+                </div>
+                <div class="form-group">
+                    <label>开始时间</label>
+                    <input type="datetime-local" id="editStartTime">
+                </div>
+                <div class="form-group">
+                    <label>结束时间</label>
+                    <input type="datetime-local" id="editEndTime">
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEditRecord()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <div class="alert-overlay" id="alertOverlay">
         <div class="alert-box">
             <div class="alert-icon">&#128227;</div>
@@ -690,6 +843,8 @@
         var alertSoundTimeout = null;
         var alertCountdownInterval = null;
         var alertRemainingSeconds = 0;
+        var editingRecordId = null;
+        var audioUnlocked = false;
 
         function getRecords() {
             var data = localStorage.getItem(STORAGE_KEY);
@@ -735,11 +890,54 @@
         var modalOverlay = document.getElementById('modalOverlay');
         var importArea = document.getElementById('importArea');
         var importTextarea = document.getElementById('importTextarea');
+        var addRecordArea = document.getElementById('addRecordArea');
         var alertOverlay = document.getElementById('alertOverlay');
         var alertTitle = document.getElementById('alertTitle');
         var alertText = document.getElementById('alertText');
         var alertTime = document.getElementById('alertTime');
         var alertCountdown = document.getElementById('alertCountdown');
+        var editModalOverlay = document.getElementById('editModalOverlay');
+        var audioStatus = document.getElementById('audioStatus');
+
+        // ==================== iOS音频解锁 ====================
+        function unlockAudio() {
+            if (audioUnlocked) return;
+
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                // 播放一个无声的音频来解锁
+                var buffer = audioCtx.createBuffer(1, 1, 22050);
+                var source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+                source.start(0);
+
+                audioUnlocked = true;
+                audioStatus.textContent = '音频已激活，提示音可以正常播放';
+                audioStatus.className = 'audio-status ready';
+
+                setTimeout(function() {
+                    audioStatus.style.display = 'none';
+                }, 3000);
+            } catch(e) {
+                console.log('音频解锁失败', e);
+            }
+        }
+
+        // 监听所有用户交互来解锁音频
+        function setupAudioUnlock() {
+            var events = ['touchstart', 'touchend', 'click', 'mousedown', 'mouseup'];
+            events.forEach(function(event) {
+                document.addEventListener(event, unlockAudio, { once: true });
+            });
+        }
 
         courseBtns.forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -786,6 +984,16 @@
             var min = String(d.getMinutes()).padStart(2, '0');
             var s = String(d.getSeconds()).padStart(2, '0');
             return y + '-' + m + '-' + day + ' ' + h + ':' + min + ':' + s;
+        }
+
+        function toDatetimeLocal(timestamp) {
+            var d = new Date(timestamp);
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            var h = String(d.getHours()).padStart(2, '0');
+            var min = String(d.getMinutes()).padStart(2, '0');
+            return y + '-' + m + '-' + day + 'T' + h + ':' + min;
         }
 
         function initAudio() {
@@ -886,6 +1094,7 @@
         }
 
         function testSound() {
+            unlockAudio();
             initAudio();
             alertTitle.textContent = '测试提示音';
             alertText.textContent = '这是测试，实际提醒时会显示课程信息';
@@ -919,7 +1128,7 @@
 
         startBtn.addEventListener('click', function() {
             if (!selectedCourse) return;
-            initAudio();
+            unlockAudio();
             startTime = Date.now();
             alertedTimes = [];
             timerInterval = setInterval(updateTimer, 100);
@@ -983,6 +1192,143 @@
             currentCourseDiv.textContent = '请选择一门课程开始计时';
         }
 
+        // ==================== 手动添加记录 ====================
+        function toggleAddRecord() {
+            addRecordArea.classList.toggle('show');
+            importArea.classList.remove('show');
+            if (addRecordArea.classList.contains('show')) {
+                var today = new Date();
+                var y = today.getFullYear();
+                var m = String(today.getMonth() + 1).padStart(2, '0');
+                var d = String(today.getDate()).padStart(2, '0');
+                document.getElementById('manualDate').value = y + '-' + m + '-' + d;
+                document.getElementById('manualStartTime').value = '09:00';
+                document.getElementById('manualEndTime').value = '10:00';
+            }
+        }
+
+        function addManualRecord() {
+            var course = document.getElementById('manualCourse').value;
+            var date = document.getElementById('manualDate').value;
+            var startTimeStr = document.getElementById('manualStartTime').value;
+            var endTimeStr = document.getElementById('manualEndTime').value;
+            var durationMin = document.getElementById('manualDuration').value;
+
+            if (!course) {
+                showToast('请选择课程');
+                return;
+            }
+            if (!date || !startTimeStr) {
+                showToast('请填写日期和开始时间');
+                return;
+            }
+
+            var startDate = new Date(date + 'T' + startTimeStr + ':00');
+            var endDate;
+            var duration;
+
+            if (durationMin && durationMin > 0) {
+                duration = parseInt(durationMin) * 60000;
+                endDate = new Date(startDate.getTime() + duration);
+            } else if (endTimeStr) {
+                endDate = new Date(date + 'T' + endTimeStr + ':00');
+                if (endDate <= startDate) {
+                    endDate = new Date(endDate.getTime() + 86400000);
+                }
+                duration = endDate.getTime() - startDate.getTime();
+            } else {
+                showToast('请填写结束时间或时长');
+                return;
+            }
+
+            if (duration <= 0) {
+                showToast('结束时间必须晚于开始时间');
+                return;
+            }
+
+            var record = {
+                id: Date.now().toString(),
+                course: course,
+                startTime: startDate.getTime(),
+                endTime: endDate.getTime(),
+                duration: duration,
+                date: date
+            };
+
+            var records = getRecords();
+            records.push(record);
+            saveRecords(records);
+
+            toggleAddRecord();
+            showToast('已添加：' + course + ' ' + formatDuration(duration));
+            renderRecords();
+            renderWeekStats();
+
+            document.getElementById('manualCourse').value = '';
+            document.getElementById('manualDuration').value = '';
+        }
+
+        // ==================== 修改记录 ====================
+        function openEditModal(id) {
+            var records = getRecords();
+            var record = records.find(function(r) { return r.id === id; });
+            if (!record) return;
+
+            editingRecordId = id;
+            document.getElementById('editCourseName').textContent = record.course;
+            document.getElementById('editStartTime').value = toDatetimeLocal(record.startTime);
+            document.getElementById('editEndTime').value = toDatetimeLocal(record.endTime);
+            editModalOverlay.classList.add('show');
+        }
+
+        function closeEditModal() {
+            editModalOverlay.classList.remove('show');
+            editingRecordId = null;
+        }
+
+        function saveEditRecord() {
+            if (!editingRecordId) return;
+
+            var startStr = document.getElementById('editStartTime').value;
+            var endStr = document.getElementById('editEndTime').value;
+
+            if (!startStr || !endStr) {
+                showToast('请填写完整的时间');
+                return;
+            }
+
+            var newStart = new Date(startStr).getTime();
+            var newEnd = new Date(endStr).getTime();
+            var newDuration = newEnd - newStart;
+
+            if (newDuration <= 0) {
+                showToast('结束时间必须晚于开始时间');
+                return;
+            }
+
+            var records = getRecords();
+            for (var i = 0; i < records.length; i++) {
+                if (records[i].id === editingRecordId) {
+                    records[i].startTime = newStart;
+                    records[i].endTime = newEnd;
+                    records[i].duration = newDuration;
+                    records[i].date = new Date(newStart).toISOString().split('T')[0];
+                    break;
+                }
+            }
+
+            saveRecords(records);
+            closeEditModal();
+            showToast('记录已修改');
+            renderRecords();
+            renderWeekStats();
+        }
+
+        editModalOverlay.addEventListener('click', function(e) {
+            if (e.target === editModalOverlay) closeEditModal();
+        });
+
+        // ==================== 导出CSV表格 ====================
         function exportCSV() {
             var records = getRecords();
             if (records.length === 0) {
@@ -1033,8 +1379,10 @@
             showToast('表格已下载：' + filename);
         }
 
+        // ==================== 导入数据 ====================
         function toggleImport() {
             importArea.classList.toggle('show');
+            addRecordArea.classList.remove('show');
             if (importArea.classList.contains('show')) {
                 importTextarea.focus();
             } else {
@@ -1090,6 +1438,7 @@
             });
         }
 
+        // ==================== 模态框 ====================
         function showModal(title, text, callback) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalText').textContent = text;
@@ -1127,6 +1476,7 @@
             modalOverlay.classList.add('show');
         }
 
+        // ==================== 日期和记录 ====================
         function formatDate(date) {
             var y = date.getFullYear();
             var m = String(date.getMonth() + 1).padStart(2, '0');
@@ -1159,11 +1509,16 @@
                 var timeStr = String(start.getHours()).padStart(2, '0') + ':' + String(start.getMinutes()).padStart(2, '0');
                 var item = document.createElement('div');
                 item.className = 'record-item';
-                item.innerHTML = '<div class="record-info"><div class="record-course">' + record.course + '</div><div class="record-time">' + timeStr + ' 开始</div></div><div style="display:flex;align-items:center;gap:12px;"><div class="record-duration">' + formatDuration(record.duration) + '</div><button class="delete-btn" onclick="showDeleteModal(\'' + record.id + '\')">&#128465;</button></div>';
+                item.onclick = function(e) {
+                    if (e.target.classList.contains('delete-btn') || e.target.classList.contains('edit-btn')) return;
+                    openEditModal(record.id);
+                };
+                item.innerHTML = '<div class="record-info"><div class="record-course">' + record.course + '</div><div class="record-time">' + timeStr + ' 开始 - ' + formatTime(record.duration) + '</div></div><div class="record-actions"><button class="edit-btn" onclick="openEditModal(\'' + record.id + '\')">修改</button><button class="delete-btn" onclick="showDeleteModal(\'' + record.id + '\')">&#128465;</button></div>';
                 recordsList.appendChild(item);
             });
         }
 
+        // ==================== 本周统计 ====================
         function getWeekStart(date) {
             var d = new Date(date);
             var day = d.getDay();
@@ -1237,6 +1592,7 @@
         }
 
         function init() {
+            setupAudioUnlock();
             renderRecords();
             renderWeekStats();
         }
