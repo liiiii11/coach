@@ -473,6 +473,7 @@
             .data-actions .btn { width: 100%; justify-content: center; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
     <div class="container">
@@ -501,7 +502,7 @@
         <div class="card">
             <div class="card-title">数据管理</div>
             <div class="data-actions">
-                <button class="btn btn-success" onclick="exportData()">导出数据</button>
+                <button class="btn btn-success" onclick="exportCSV()">导出表格</button>
                 <button class="btn btn-primary" onclick="toggleImport()">导入数据</button>
                 <button class="btn btn-danger" onclick="clearAllData()">清空所有</button>
             </div>
@@ -548,7 +549,7 @@
 
     <script>
         const STORAGE_KEY = 'course_timer_records';
-        
+
         function getRecords() {
             const data = localStorage.getItem(STORAGE_KEY);
             return data ? JSON.parse(data) : [];
@@ -625,6 +626,22 @@
             return parts.join('');
         }
 
+        function formatDurationDecimal(ms) {
+            const hours = (ms / 3600000).toFixed(2);
+            return hours;
+        }
+
+        function formatDateTime(timestamp) {
+            const d = new Date(timestamp);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const h = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            const s = String(d.getSeconds()).padStart(2, '0');
+            return y + '-' + m + '-' + day + ' ' + h + ':' + min + ':' + s;
+        }
+
         function updateTimer() {
             const elapsed = Date.now() - startTime;
             timerDisplay.textContent = formatTime(elapsed);
@@ -693,50 +710,57 @@
             currentCourseDiv.textContent = '请选择一门课程开始计时';
         }
 
-        // ==================== 数据导出导入 ====================
-        function exportData() {
+        // ==================== 导出CSV表格 ====================
+        function exportCSV() {
             const records = getRecords();
             if (records.length === 0) {
                 showToast('没有数据可导出');
                 return;
             }
-            const data = {
-                version: '1.0',
-                exportTime: new Date().toISOString(),
-                recordCount: records.length,
-                records: records
-            };
-            const jsonStr = JSON.stringify(data, null, 2);
-            
-            // 复制到剪贴板
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(jsonStr).then(() => {
-                    showToast('数据已复制到剪贴板，请粘贴保存');
-                }).catch(() => {
-                    fallbackCopy(jsonStr);
-                });
-            } else {
-                fallbackCopy(jsonStr);
-            }
+
+            // 表头
+            let csv = '\uFEFF序号,课程名称,日期,开始时间,结束时间,时长(小时),时长(时分秒)\n';
+
+            // 按时间排序
+            const sorted = [...records].sort((a, b) => a.startTime - b.startTime);
+
+            sorted.forEach((r, i) => {
+                const startStr = formatDateTime(r.startTime);
+                const endStr = formatDateTime(r.endTime);
+                const hours = formatDurationDecimal(r.duration);
+                const hms = formatTime(r.duration);
+                csv += (i + 1) + ',' + r.course + ',' + r.date + ',' + startStr + ',' + endStr + ',' + hours + ',' + hms + '\n';
+            });
+
+            // 添加汇总行
+            csv += '\n汇总,,,,,\n';
+            const courses = ['私教答疑', '私教课程', '快速上手', '公开课', '门店支持'];
+            let totalMs = 0;
+            courses.forEach(c => {
+                const cRecords = sorted.filter(r => r.course === c);
+                const cMs = cRecords.reduce((sum, r) => sum + r.duration, 0);
+                totalMs += cMs;
+                if (cMs > 0) {
+                    csv += c + '总计,,,,,' + formatDurationDecimal(cMs) + ',' + formatTime(cMs) + '\n';
+                }
+            });
+            csv += '全部总计,,,,,' + formatDurationDecimal(totalMs) + ',' + formatTime(totalMs) + '\n';
+
+            // 下载文件
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const filename = '课程时间记录_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            showToast('表格已下载：' + filename);
         }
 
-        function fallbackCopy(text) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                showToast('数据已复制到剪贴板，请粘贴保存');
-            } catch (err) {
-                showToast('复制失败，请手动复制弹出的内容');
-                alert('请全选并复制以下内容保存：\\n\\n' + text.substring(0, 500) + '...');
-            }
-            document.body.removeChild(textarea);
-        }
-
+        // ==================== 导入数据 ====================
         function toggleImport() {
             importArea.classList.toggle('show');
             if (importArea.classList.contains('show')) {
@@ -767,7 +791,7 @@
                     showToast('导入的数据为空');
                     return;
                 }
-                
+
                 showModal('确认导入', '确定要导入 ' + records.length + ' 条记录吗？这将覆盖现有数据。', () => {
                     saveRecords(records);
                     renderRecords();
@@ -865,7 +889,7 @@
                 const timeStr = String(start.getHours()).padStart(2, '0') + ':' + String(start.getMinutes()).padStart(2, '0');
                 const item = document.createElement('div');
                 item.className = 'record-item';
-                item.innerHTML = '<div class="record-info"><div class="record-course">' + record.course + '</div><div class="record-time">' + timeStr + ' 开始</div></div><div style="display:flex;align-items:center;gap:12px;"><div class="record-duration">' + formatDuration(record.duration) + '</div><button class="delete-btn" onclick="showDeleteModal(\'' + record.id + '\')">&#128465;</button></div>';
+                item.innerHTML = '<div class="record-info"><div class="record-course">' + record.course + '</div><div class="record-time">' + timeStr + ' 开始</div></div><div style="display:flex;align-items:center;gap:12px;"><div class="record-duration">' + formatDuration(record.duration) + '</div><button class="delete-btn" onclick="showDeleteModal('' + record.id + '')">&#128465;</button></div>';
                 recordsList.appendChild(item);
             });
         }
